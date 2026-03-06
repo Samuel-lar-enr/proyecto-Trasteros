@@ -1,0 +1,67 @@
+// Configuración del generador de cliente Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Configuración de la conexión a la base de datos MySQL
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  PARTICULAR
+  EMPRESA
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// Modelo de Usuario para autenticación y contratos
+model User {
+  id               Int      @id @default(autoincrement())
+  userType         UserType @default(PARTICULAR) @map("user_type")
+  role             Role     @default(USER) @map("role")
+  
+  // Autenticación
+  email            String   @unique
+  username         String   @unique
+  passwordHash     String?  @map("password_hash") // Opcional si usa Google
+  googleId         String?  @unique @map("google_id")
+  passwordReminder String?  @map("password_reminder")
+  isActive         Boolean  @default(false) @map("is_active")
+  activationToken  String?  @unique @map("activation_token")
+  
+  // Datos Personales (PARTICULAR)
+  name             String   // Nombre
+  surname          String?  @map("surname") // Apellidos
+  dniNif           String?  @unique @map("dni_nif") // DNI/NIF para particulares
+  
+  // Datos de Empresa (EMPRESA)
+  commercialName   String?  @map("commercial_name") // Nombre Comercial
+  nifCif           String?  @map("nif_cif") // NIF/CIF para empresas
+  
+  // Dirección y Contacto
+  address          String?  @map("address") // Dirección
+  population       String?  @map("population") // Población
+  province         String?  @map("province") // Provincia
+  phone            String?  @map("phone") // Teléfono
+  
+  // Datos Bancarios
+  paymentMethod    String?  @map("payment_method") // Forma de pago
+  bank             String?  @map("bank") // Banco
+  bicSwift         String?  @map("bic_swift") // BIC/SWIFT
+  iban             String?  @map("iban") // IBAN
+  
+  // Otros
+  observations     String?  @db.Text @map("observations") // Observaciones
+  
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+

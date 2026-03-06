@@ -1,0 +1,150 @@
+### ============================================
+### Variables
+### ============================================
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+# El token se captura automáticamente de la respuesta del login.
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "password": "Demo123!"
+}
+
+###
+
+@token = {{adminLogin.response.body.token}}
+
+### ============================================
+### HEALTH CHECK
+### ============================================
+
+### Info del API - Muestra endpoints disponibles
+GET {{baseUrl}}/
+
+### Health check del servidor
+GET {{baseUrl}}/health
+
+### ============================================
+### AUTH - Autenticación Pública
+### ============================================
+
+### Registrar un nuevo usuario (Autoregistro)
+# @name register
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "nuevo@example.com",
+  "password": "Password123",
+  "name": "Nuevo Usuario"
+}
+
+### Registrar un nuevo usuario (Autoregistro)
+# @name register
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "emperador.sle@gmail.com",
+  "password": "Password123",
+  "name": "Samuel"
+}
+
+### Login con Google (Simulado en desarrollo)
+# @name googleLogin
+POST {{baseUrl}}/api/auth/google
+Content-Type: {{contentType}}
+
+{
+  "idToken": "dummy-token-google"
+}
+
+###
+
+@userToken = {{googleLogin.response.body.token}}
+
+### ============================================
+### ADMIN - Gestión de Usuarios (Requiere Admin Token)
+### ============================================
+
+### Registro MANUAL de Particular
+POST {{baseUrl}}/api/auth/manual-register
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userType": "PARTICULAR",
+  "email": "particular@test.com",
+  "username": "p_lopez",
+  "password": "User1234",
+  "passwordReminder": "Mi mascota",
+  "name": "Pedro",
+  "surname": "López García",
+  "dniNif": "12345678Z",
+  "address": "Calle Mayor 10",
+  "population": "Madrid",
+  "province": "Madrid",
+  "phone": "600112233",
+  "paymentMethod": "Transferencia",
+  "bank": "Santander",
+  "bicSwift": "SANESMM",
+  "iban": "ES2112345678901234567890",
+  "observations": "Cliente preferente"
+}
+
+### Registro MANUAL de Empresa
+POST {{baseUrl}}/api/auth/manual-register
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userType": "EMPRESA",
+  "email": "info@empresa.com",
+  "username": "empresa_sl",
+  "password": "Corp1234",
+  "passwordReminder": "Fundación",
+  "name": "Tech Solutions",
+  "commercialName": "Tech Sol S.L.",
+  "nifCif": "B12345678",
+  "address": "Av. Industria 45",
+  "population": "Barcelona",
+  "province": "Barcelona",
+  "phone": "931223344",
+  "paymentMethod": "Recibo",
+  "bank": "BBVA",
+  "bicSwift": "BBVAESMM",
+  "iban": "ES2198765432109876543210",
+  "observations": "Facturación mensual"
+}
+
+### ============================================
+### USER - Perfil y Actualización
+### ============================================
+
+### Obtener mi información (Me)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{userToken}}
+
+### Completar perfil (tras login Google)
+PUT {{baseUrl}}/api/auth/profile
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "userType": "PARTICULAR",
+  "surname": "Mora Perez",
+  "dniNif": "87654321X",
+  "address": "Calle Nueva 5",
+  "population": "Valencia",
+  "province": "Valencia",
+  "phone": "655443322",
+  "paymentMethod": "Tarjeta",
+  "bank": "Caixa",
+  "bicSwift": "CAIXESMM",
+  "iban": "ES2100001111222233334444"
+}
+

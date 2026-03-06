@@ -1,0 +1,111 @@
+version: "3.9"
+
+services:
+  # ========================================
+  # MySQL Database
+  # ========================================
+  mysql:
+    image: mysql:8.0
+    container_name: crud_mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-admin123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-contacts_db}
+      MYSQL_USER: ${MYSQL_USER:-admin}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-admin123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - crud_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # phpMyAdmin - Visual MySQL Administrator
+  # ========================================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: crud_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-admin123}
+    networks:
+      - crud_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ========================================
+  # Backend API (Node.js + Express + TypeScript)
+  # ========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crud_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      # Database
+      DATABASE_URL: mysql://${MYSQL_USER:-admin}:${MYSQL_PASSWORD:-admin123}@mysql:3306/${MYSQL_DATABASE:-contacts_db}
+
+      # Server
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${NODE_ENV:-development}
+
+      # Authentication
+      AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+
+      # Email (SMTP)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-"Trasteros App"}
+      FROM_EMAIL: ${FROM_EMAIL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      # Montar código fuente para hot reload en desarrollo
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    networks:
+      - crud_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # Comando personalizado: espera a la DB, ejecuta migraciones y seed, luego inicia el servidor
+    command: >
+      sh -c "
+        echo '⏳ Esperando a MySQL...' &&
+        npx prisma db push &&
+        echo '✅ Base de datos sincronizada' &&
+        npm run prisma:seed &&
+        npm run dev
+      "
+
+# ========================================
+# Volúmenes persistentes
+# ========================================
+volumes:
+  mysql_data:
+    driver: local
+  phpmyadmin_data:
+    driver: local
+
+# ========================================
+# Red interna para comunicación entre servicios
+# ========================================
+networks:
+  crud_network:
+    driver: bridge
