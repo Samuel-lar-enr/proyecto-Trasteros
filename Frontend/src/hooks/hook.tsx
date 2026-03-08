@@ -1,9 +1,5 @@
-import React from 'react'
+const Hook = () => {
+  return <div>hook</div>;
+};
 
-const hook = () => {
-  return (
-    <div>hook</div>
-  )
-}
-
-export default hook
+export default Hook;
