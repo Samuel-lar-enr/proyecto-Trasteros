@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import { authService } from '../services/api';
+import AuthLayout from '../components/AuthLayout';
+import Button from '../components/Button';
 
 type ActivationStatus = 'loading' | 'success' | 'error';
 
@@ -14,7 +16,7 @@ const ActivationPage = () => {
     const runActivation = async () => {
       if (!token) {
         setStatus('error');
-        setMessage('Token de activacion no valido.');
+        setMessage('Token de activación no válido.');
         return;
       }
 
@@ -25,12 +27,7 @@ const ActivationPage = () => {
       } catch (error) {
         setStatus('error');
         if (isAxiosError(error)) {
-          setMessage(
-            String(
-              error.response?.data?.message ??
-                'No se pudo activar la cuenta. El enlace puede haber caducado.',
-            ),
-          );
+          setMessage(error.response?.data?.message ?? 'No se pudo activar la cuenta. El enlace puede haber caducado.');
           return;
         }
         setMessage('No se pudo activar la cuenta.');
@@ -41,27 +38,25 @@ const ActivationPage = () => {
   }, [token]);
 
   return (
-    <main className="auth-layout">
-      <section className="auth-card">
-        <p className="eyebrow">Verificacion de cuenta</p>
-        <h1>Activacion</h1>
-        <p className="subtitle">{message}</p>
+    <AuthLayout encabezado="Verificación de cuenta" titulo="Activación" subtitulo={message}>
+      {status === 'loading' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+          <div className="spinner" aria-label="Cargando" />
+        </div>
+      )}
 
-        {status === 'loading' && <div className="spinner" aria-label="Cargando" />}
+      {status === 'success' && (
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <Button variant="primary">Ir al login</Button>
+        </Link>
+      )}
 
-        {status === 'success' && (
-          <Link className="primary-btn center-link" to="/login">
-            Ir al login
-          </Link>
-        )}
-
-        {status === 'error' && (
-          <Link className="secondary-btn center-link" to="/login">
-            Volver al login
-          </Link>
-        )}
-      </section>
-    </main>
+      {status === 'error' && (
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <Button variant="secondary">Volver al login</Button>
+        </Link>
+      )}
+    </AuthLayout>
   );
 };
 

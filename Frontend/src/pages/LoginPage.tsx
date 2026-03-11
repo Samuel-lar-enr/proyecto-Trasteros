@@ -2,6 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/context';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import AuthLayout from '../components/AuthLayout';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -34,7 +37,7 @@ const LoginPage = () => {
           setErrorMessage(
             String(
               error.response.data?.message ??
-                'Tu cuenta no esta activada. Revisa tu email para activarla.',
+              'Tu cuenta no esta activada. Revisa tu email para activarla.',
             ),
           );
         } else {
@@ -51,52 +54,41 @@ const LoginPage = () => {
   };
 
   return (
-    <main className="auth-layout">
-      <section className="auth-card">
-        <p className="eyebrow">Acceso Boxen</p>
-        <h1>Iniciar sesion</h1>
-        <p className="subtitle">Accede con tu usuario y contrasena.</p>
+    <AuthLayout encabezado="Acceso Boxen" titulo="Iniciar sesión" subtitulo="Accede con tu usuario y contraseña.">
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <Input
+          id="email"
+          label="Usuario (email)"
+          type="email"
+          autoComplete="email"
+          placeholder="tu@email.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+        />
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label htmlFor="email">Usuario (email)</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
+        <Input
+          id="password"
+          label="Contraseña"
+          type="password"
+          autoComplete="current-password"
+          placeholder="********"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          error={errorMessage}
+        />
 
-          <label htmlFor="password">Contrasena</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="********"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
+        <Button type="submit" isLoading={isSubmitting}>Entrar</Button>
+      </form>
 
-          {errorMessage && <p className="error-text">{errorMessage}</p>}
+      <Button variant="secondary" type="button" disabled>Continuar con Google (próximamente)</Button>
 
-          <button className="primary-btn" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <button className="secondary-btn" type="button" disabled>
-          Continuar con Google (proximamente)
-        </button>
-
-        <nav className="auth-links" aria-label="Enlaces de acceso">
-          <Link to="/register">Crear usuario</Link>
-          <Link to="/forgot-password">Recuperar contrasena</Link>
-        </nav>
-      </section>
-    </main>
+      <nav className="auth-links" aria-label="Enlaces de acceso">
+        <Link to="/register">Crear usuario</Link>
+        <Link to="/forgot-password">Recuperar contraseña</Link>
+      </nav>
+    </AuthLayout>
   );
 };
 
