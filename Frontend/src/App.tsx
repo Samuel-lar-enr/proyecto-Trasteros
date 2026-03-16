@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/context';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ActivationPage from './pages/ActivationPage';
 import DashboardPage from './pages/DashboardPage';
 import PlaceholderPage from './pages/PlaceholderPage';
@@ -21,15 +22,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/register"
-            element={
-              <PlaceholderPage
-                title="Registro"
-                message="La pantalla de registro la implementamos en el siguiente paso."
-              />
-            }
-          />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/forgot-password"
             element={

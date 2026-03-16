@@ -3,27 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/**
- * Utilidades para el envío de correos electrónicos
- */
-
-// Configuración del transportador de correo
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465', // true para 465, false para otros puertos
+  secure: process.env.SMTP_PORT === '465', 
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
 
-/**
- * Envía un correo de activación de cuenta
- * 
- * @param email - Correo del destinatario
- * @param name - Nombre del usuario
- * @param activationToken - Token de activación único
+/** 
+ * @param email 
+ * @param name  
+ * @param activationToken
  */
 export async function sendActivationEmail(
   email: string,
@@ -31,8 +24,8 @@ export async function sendActivationEmail(
   activationToken: string
 ): Promise<void> {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  // Si la URL ya contiene el path del backend, solo añadimos la barra y el token
-  const activationLink = frontendUrl.endsWith('/') ? `${frontendUrl}${activationToken}` : `${frontendUrl}/${activationToken}`;
+
+  const activationLink = frontendUrl.endsWith('/') ? `${frontendUrl}activate/${activationToken}` : `${frontendUrl}/activate/${activationToken}`;
 
   const mailOptions = {
     from: `${process.env.SMTP_FROM || 'Trasteros App'} <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
@@ -56,9 +49,8 @@ export async function sendActivationEmail(
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`📧 Email de activación enviado a: ${email}`);
+    console.log(` Email de activación enviado a: ${email}`);
   } catch (error) {
-    console.error('❌ Error enviando email de activación:', error);
-    // No lanzamos el error para no bloquear el registro, pero lo logueamos
+    console.error('Error enviando email de activación:', error);
   }
 }
