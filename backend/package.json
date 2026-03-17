@@ -6,16 +6,15 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
     "start": "node dist/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "build": "prisma generate && tsc",
+    "server:start": "npm run dev",
+    "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f backend",
-    "docker:rebuild": "docker compose up -d --build"
+    "docker:logs": "docker compose logs -f backend"
   },
   "keywords": [
     "crud",

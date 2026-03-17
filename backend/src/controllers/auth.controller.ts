@@ -3,8 +3,8 @@ import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { prisma } from "../lib/prisma.js";
 import { generateToken } from "../utils/jwt.utils.js";
-import { googleLoginSchema, loginSchema, manualRegisterSchema, registerSchema, updateProfileSchema } from "../validators/auth.validator.js";
-import { sendActivationEmail } from "../utils/email.utils.js";
+import { googleLoginSchema, loginSchema, manualRegisterSchema, registerSchema, updateProfileSchema, forgotPasswordSchema, resetPasswordSchema, resendActivationSchema } from "../validators/auth.validator.js";
+import { sendActivationEmail, sendResetPasswordEmail } from "../utils/email.utils.js";
 import crypto from "crypto";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -200,7 +200,7 @@ export async function login(
     if (!user) {
       res.status(401).json({
         error: "No autorizado",
-        message: "Credenciales inválidas",
+        message: "El email no está registrado",
       });
       return;
     }
@@ -215,6 +215,14 @@ export async function login(
     }
 
     // Verificar contraseña
+    if (!user.passwordHash) {
+      res.status(401).json({
+        error: "No autorizado",
+        message: "Esta cuenta se registró con un proveedor externo (Google). Inicia sesión con Google.",
+      });
+      return;
+    }
+
     const isPasswordValid = await bcrypt.compare(
       data.password,
       user.passwordHash,
@@ -223,7 +231,7 @@ export async function login(
     if (!isPasswordValid) {
       res.status(401).json({
         error: "No autorizado",
-        message: "Credenciales inválidas",
+        message: "Contraseña incorrecta",
       });
       return;
     }
@@ -466,7 +474,7 @@ export async function activateAccount(
 
     // Buscar usuario con ese token
     const user = await prisma.user.findUnique({
-      where: { activationToken: token },
+      where: { activationToken: token as string },
     });
 
     if (!user) {
@@ -488,6 +496,155 @@ export async function activateAccount(
 
     res.status(200).json({
       message: "Cuenta activada exitosamente. Ya puedes iniciar sesión.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/forgot-password
+ * Solicita el restablecimiento de contraseña enviando un email
+ */
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Por seguridad, siempre respondemos "si existe, se enviará"
+    if (!user || user.googleId) {
+      res.status(200).json({
+        message: "Si el correo está registrado, recibirás un enlace de recuperación pronto.",
+      });
+      return;
+    }
+
+    // Generar token y fecha de expiración (1 hora)
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 3600000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: expires,
+      },
+    });
+
+    // Enviar email
+    sendResetPasswordEmail(user.email, user.name, resetToken).catch(console.error);
+
+    res.status(200).json({
+      message: "Si el correo está registrado, recibirás un enlace de recuperación pronto.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/reset-password/:token
+ * Restablece la contraseña usando el token
+ */
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { token } = req.params;
+    const { password } = resetPasswordSchema.parse(req.body);
+
+    if (!token) {
+      res.status(400).json({ error: "Token requerido" });
+      return;
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token as string,
+        resetPasswordExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      res.status(400).json({
+        error: "Inválido",
+        message: "El token de recuperación es inválido o ha expirado.",
+      });
+      return;
+    }
+
+    // Hashear nueva contraseña
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Actualizar usuario y limpiar campos de reset
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    res.status(200).json({
+      message: "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/resend-activation
+ * Reenvía el email de activación si la cuenta está inactiva
+ */
+export async function resendActivation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { email } = resendActivationSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      res.status(200).json({
+        message: "Si el correo está registrado e inactivo, recibirás un nuevo enlace pronto.",
+      });
+      return;
+    }
+
+    if (user.isActive) {
+      res.status(400).json({
+        message: "Esta cuenta ya está activa.",
+      });
+      return;
+    }
+
+    // Generar nuevo token si no tiene uno o simplemente reusar/actualizar
+    const activationToken = crypto.randomBytes(32).toString("hex");
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { activationToken },
+    });
+
+    sendActivationEmail(user.email, user.name, activationToken).catch(console.error);
+
+    res.status(200).json({
+      message: "Si el correo está registrado e inactivo, recibirás un nuevo enlace pronto.",
     });
   } catch (error) {
     next(error);

@@ -11,6 +11,7 @@ const RegisterPage = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [email, setEmail] = useState('');
+    const [registeredEmail, setRegisteredEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
@@ -67,6 +68,7 @@ const RegisterPage = () => {
                 name,
             });
 
+            setRegisteredEmail(email); // Guardamos el email antes de limpiar
             setSuccessMessage(
                 'Registro exitoso. Por favor, revisa tu email para activar tu cuenta.'
             );
@@ -77,10 +79,10 @@ const RegisterPage = () => {
             setConfirmPassword('');
             setName('');
 
-            // Redirigir a login después de 3 segundos
+            // Redirigir a login después de 10 segundos
             setTimeout(() => {
                 navigate('/login', { replace: true });
-            }, 3000);
+            }, 10000);
         } catch (error) {
             if (isAxiosError(error) && error.response) {
                 if (error.response.status === 409) {
@@ -98,11 +100,29 @@ const RegisterPage = () => {
         }
     };
 
+    const handleResendActivation = async () => {
+        const emailToResend = registeredEmail || email;
+        if (!emailToResend) return;
+
+        try {
+            await authService.resendActivation({ email: emailToResend });
+            setSuccessMessage('Email de activación reenviado con éxito.');
+        } catch (error) {
+            setErrorMessage('Error al reenviar el email.');
+        }
+    };
+
     return (
         <AuthLayout encabezado="Acceso Boxen" titulo="Crear cuenta" subtitulo="Completa el formulario para registrarte.">
             {successMessage && (
-                <div style={{ padding: '12px 16px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', marginBottom: '16px' }}>
-                    {successMessage}
+                <div style={{ padding: '12px 16px', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '4px', marginBottom: '16px', fontSize: '0.875rem', border: '1px solid #a7f3d0' }}>
+                    <p>{successMessage}</p>
+                    <button 
+                        onClick={handleResendActivation}
+                        style={{ background: 'none', border: 'none', color: '#059669', textDecoration: 'underline', cursor: 'pointer', padding: 0, marginTop: '8px', fontSize: '0.75rem' }}
+                    >
+                        ¿No has recibido nada? Enviar de nuevo
+                    </button>
                 </div>
             )}
 

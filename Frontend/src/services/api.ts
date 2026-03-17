@@ -6,7 +6,10 @@ import type {
     MeResponse,
     UpdateProfileRequest,
     GoogleLoginRequest,
-    GenericResponse
+    GenericResponse,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ResendActivationRequest
 } from '../types/apiTypes';
 
 /**
@@ -85,6 +88,30 @@ export const authService = {
    */
   activateAccount: async (token: string): Promise<GenericResponse> => {
     const res = await api.get<GenericResponse>(`/auth/activate/${token}`);
+    return res.data;
+  },
+
+  /**
+   * Solicitar recuperación de contraseña
+   */
+  forgotPassword: async (data: ForgotPasswordRequest): Promise<GenericResponse> => {
+    const res = await api.post<GenericResponse>('/auth/forgot-password', data);
+    return res.data;
+  },
+
+  /**
+   * Restablecer contraseña usando token
+   */
+  resetPassword: async (token: string, data: ResetPasswordRequest): Promise<GenericResponse> => {
+    const res = await api.post<GenericResponse>(`/auth/reset-password/${token}`, data);
+    return res.data;
+  },
+
+  /**
+   * Reenviar email de activación
+   */
+  resendActivation: async (data: ResendActivationRequest): Promise<GenericResponse> => {
+    const res = await api.post<GenericResponse>('/auth/resend-activation', data);
     return res.data;
   },
 

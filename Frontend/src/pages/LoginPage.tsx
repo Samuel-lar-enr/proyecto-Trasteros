@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
 import { useAuth } from '../contexts/context';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -13,7 +14,9 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAccountNotActivated, setIsAccountNotActivated] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -24,6 +27,8 @@ const LoginPage = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
+    setIsAccountNotActivated(false);
     setIsSubmitting(true);
 
     try {
@@ -32,7 +37,9 @@ const LoginPage = () => {
     } catch (error) {
       if (isAxiosError(error) && error.response) {
         if (error.response.status === 401) {
-          setErrorMessage('Error en la identificación');
+          setErrorMessage(
+            String(error.response.data?.message ?? 'Error en la identificación')
+          );
         } else if (error.response.status === 403) {
           setErrorMessage(
             String(
@@ -40,6 +47,7 @@ const LoginPage = () => {
               'Tu cuenta no esta activada. Revisa tu email para activarla.',
             ),
           );
+          setIsAccountNotActivated(true);
         } else {
           setErrorMessage(
             String(error.response.data?.message ?? 'No se pudo iniciar sesion.'),
@@ -50,6 +58,19 @@ const LoginPage = () => {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendActivation = async () => {
+    if (!email) return;
+
+    try {
+      await authService.resendActivation({ email });
+      setSuccessMessage('Email de activación reenviado con éxito.');
+      setErrorMessage('');
+      setIsAccountNotActivated(false);
+    } catch (error) {
+      setErrorMessage('Error al reenviar el email.');
     }
   };
 
@@ -81,6 +102,24 @@ const LoginPage = () => {
 
         <Button type="submit" isLoading={isSubmitting}>Entrar</Button>
       </form>
+
+      {successMessage && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '4px', marginTop: '16px', fontSize: '0.875rem', border: '1px solid #a7f3d0' }}>
+          <p>{successMessage}</p>
+        </div>
+      )}
+
+      {isAccountNotActivated && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fff7ed', color: '#9a3412', borderRadius: '4px', marginTop: '16px', fontSize: '0.875rem', border: '1px solid #fed7aa' }}>
+          <p>¿No has recibido el email de activación?</p>
+          <button 
+            onClick={handleResendActivation}
+            style={{ background: 'none', border: 'none', color: '#c2410c', textDecoration: 'underline', cursor: 'pointer', padding: 0, marginTop: '8px', fontSize: '0.875rem' }}
+          >
+            Reenviar enlace de activación
+          </button>
+        </div>
+      )}
 
       <Button variant="secondary" type="button" disabled>Continuar con Google (próximamente)</Button>
 

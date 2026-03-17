@@ -124,9 +124,40 @@ export const updateProfileSchema = z.object({
   observations: z.string().optional(),
 });
 
+// Schema para recuperación de contraseña (solicitud)
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: 'El email es requerido' })
+    .email('Email inválido')
+    .toLowerCase()
+    .trim(),
+});
+
+// Schema para restablecimiento de contraseña
+export const resetPasswordSchema = z.object({
+  password: z
+    .string({ required_error: 'La nueva contraseña es requerida' })
+    .min(6, 'La contraseña debe tener al menos 6 caracteres')
+    .max(100, 'La contraseña es demasiado larga'),
+});
+
+// Schema para reenviar email de activación
+export const resendActivationSchema = z.object({
+  email: z
+    .string({ required_error: 'El email es requerido' })
+    .email('Email inválido')
+    .toLowerCase()
+    .trim(),
+});
+
+
 // Tipos TypeScript inferidos de los schemas
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ManualRegisterInput = z.infer<typeof manualRegisterSchema>;
 export type GoogleLoginInput = z.infer<typeof googleLoginSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export type ResendActivationInput = z.infer<typeof resendActivationSchema>;

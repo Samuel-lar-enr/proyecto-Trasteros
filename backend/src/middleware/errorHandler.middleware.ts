@@ -14,9 +14,9 @@ import { Prisma } from '@prisma/client';
  */
 export function errorHandler(
   error: Error,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   console.error('❌ Error capturado:', error);
 

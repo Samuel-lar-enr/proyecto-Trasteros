@@ -77,7 +77,7 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Cerrando servidor...');
-  await prisma.$disconect();
+  await prisma.$disconnect();
   console.log('✅ Desconectado de MySQL');
   process.exit(0);
 });

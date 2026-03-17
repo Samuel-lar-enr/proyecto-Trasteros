@@ -4,7 +4,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ActivationPage from './pages/ActivationPage';
 import DashboardPage from './pages/DashboardPage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const App = () => {
@@ -23,15 +24,8 @@ const App = () => {
             }
           />
           <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/forgot-password"
-            element={
-              <PlaceholderPage
-                title="Recuperar contrasena"
-                message="Esta opcion se conectara al login unico en la siguiente iteracion."
-              />
-            }
-          />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getMe, manualRegister, googleLogin, updateProfile, activateAccount } from '../controllers/auth.controller.js';
+import { register, login, getMe, manualRegister, googleLogin, updateProfile, activateAccount, forgotPassword, resetPassword, resendActivation } from '../controllers/auth.controller.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.middleware.js';
 
 /**
@@ -15,8 +15,17 @@ router.post('/register', register);
 // POST /api/auth/login - Iniciar sesión
 router.post('/login', login);
 
+// POST /api/auth/resend-activation - Reenviar email de activación
+router.post('/resend-activation', resendActivation);
+
 // GET /api/auth/activate/:token - Activar cuenta
 router.get('/activate/:token', activateAccount);
+
+// POST /api/auth/forgot-password - Solicitar recuperación de contraseña
+router.post('/forgot-password', forgotPassword);
+
+// POST /api/auth/reset-password/:token - Restablecer contraseña con token
+router.post('/reset-password/:token', resetPassword);
 
 // POST /api/auth/google - Login/Registro con Google
 router.post('/google', googleLogin);

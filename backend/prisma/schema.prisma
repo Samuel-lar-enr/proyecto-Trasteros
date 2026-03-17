@@ -31,8 +31,10 @@ model User {
   passwordHash     String?  @map("password_hash") // Opcional si usa Google
   googleId         String?  @unique @map("google_id")
   passwordReminder String?  @map("password_reminder")
-  isActive         Boolean  @default(false) @map("is_active")
-  activationToken  String?  @unique @map("activation_token")
+  isActive             Boolean  @default(false) @map("is_active")
+  activationToken      String?  @unique @map("activation_token")
+  resetPasswordToken   String?  @unique @map("reset_password_token")
+  resetPasswordExpires DateTime? @map("reset_password_expires")
   
   // Datos Personales (PARTICULAR)
   name             String   // Nombre

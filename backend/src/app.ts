@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 // ========================================
 
 // Ruta de health check
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     message: '🚀 API de Autenticación funcionando correctamente',
     version: '1.0.0',
@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),

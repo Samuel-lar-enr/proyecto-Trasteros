@@ -97,3 +97,15 @@ export interface ManualRegisterRequest extends UpdateProfileRequest {
     password: string;
     passwordReminder: string;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  password: string;
+}
+
+export interface ResendActivationRequest {
+  email: string;
+}

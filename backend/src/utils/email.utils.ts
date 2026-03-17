@@ -54,3 +54,44 @@ export async function sendActivationEmail(
     console.error('Error enviando email de activación:', error);
   }
 }
+
+/**
+ * Envía un email para restablecer la contraseña
+ */
+export async function sendResetPasswordEmail(
+  email: string,
+  name: string,
+  resetToken: string
+): Promise<void> {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetLink = frontendUrl.endsWith('/') 
+    ? `${frontendUrl}reset-password/${resetToken}` 
+    : `${frontendUrl}/reset-password/${resetToken}`;
+
+  const mailOptions = {
+    from: `${process.env.SMTP_FROM || 'Trasteros App'} <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+    to: email,
+    subject: 'Restablecer contraseña - Trasteros App',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
+        <h2 style="color: #2c3e50; text-align: center;">Recuperación de contraseña</h2>
+        <p>Hola <strong>${name}</strong>,</p>
+        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón para crear una nueva:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" style="background-color: #e74c3c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Restablecer contraseña</a>
+        </div>
+        <p>Este enlace expirará en 1 hora.</p>
+        <p>Si no has solicitado este cambio, puedes ignorar este correo de forma segura.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #7f8c8d; text-align: center;">Trasteros App - Gestión Segura</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email de recuperación enviado a: ${email}`);
+  } catch (error) {
+    console.error('Error enviando email de recuperación:', error);
+  }
+}
