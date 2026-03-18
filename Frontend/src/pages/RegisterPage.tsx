@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/context';
+import { useAuth } from '../contexts/authContext';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import AuthLayout from '../components/AuthLayout';
@@ -18,6 +18,8 @@ const RegisterPage = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+    const [acceptCommunications, setAcceptCommunications] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -45,6 +47,11 @@ const RegisterPage = () => {
             setErrorMessage('El nombre debe tener al menos 2 caracteres');
             return false;
         }
+
+        if (!acceptPrivacy) {
+            setErrorMessage('Debes aceptar la política de privacidad');
+            return false;
+        }
         
         return true;
     };
@@ -66,6 +73,8 @@ const RegisterPage = () => {
                 email,
                 password,
                 name,
+                acceptPrivacy,
+                acceptCommunications,
             });
 
             setRegisteredEmail(email); // Guardamos el email antes de limpiar
@@ -169,8 +178,63 @@ const RegisterPage = () => {
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     required
-                    error={errorMessage}
                 />
+
+                <div 
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'baseline', 
+                        gap: '8px', 
+                        fontSize: '0.875rem', 
+                        marginBottom: '1rem',
+                        marginTop: '0.5rem'
+                    }}
+                >
+                    <input
+                        id="privacyPolicy"
+                        type="checkbox"
+                        checked={acceptPrivacy}
+                        onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                        style={{ cursor: 'pointer', margin: 0, alignSelf: 'center' }}
+                    />
+                    <label htmlFor="privacyPolicy" style={{ color: '#4b5563', cursor: 'pointer', lineHeight: '1.25' }}>
+                        He leído y acepto la{' '}
+                        <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>
+                            política de privacidad
+                        </Link>
+                    </label>
+                </div>
+
+                <div 
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'baseline', 
+                        gap: '8px', 
+                        fontSize: '0.875rem', 
+                        marginBottom: '1rem',
+                        marginTop: '0.5rem'
+                    }}
+                >
+                    <input
+                        id="acceptCommunications"
+                        type="checkbox"
+                        checked={acceptCommunications}
+                        onChange={(e) => setAcceptCommunications(e.target.checked)}
+                        style={{ cursor: 'pointer', margin: 0, alignSelf: 'center' }}
+                    />
+                    <label htmlFor="acceptCommunications" style={{ color: '#4b5563', cursor: 'pointer', lineHeight: '1.25' }}>
+                        Deseo recibir comunicaciones comerciales y publicidad conforme a la{' '}
+                        <Link to="/marketing-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>
+                            política de comunicaciones
+                        </Link>
+                    </label>
+                </div>
+
+                {errorMessage && (
+                    <p style={{ color: '#dc2626', fontSize: '0.875rem', marginBottom: '1rem', textAlign: 'center' }}>
+                        {errorMessage}
+                    </p>
+                )}
 
                 <Button type="submit" isLoading={isSubmitting}>
                     Crear cuenta

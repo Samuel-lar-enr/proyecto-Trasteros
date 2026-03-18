@@ -62,10 +62,16 @@ export function errorHandler(
       return;
     }
 
+    // Loguear error a un archivo para diagnóstico
+    import('fs').then(fs => {
+      const logMessage = `[${new Date().toISOString()}] Prisma Error [${error.code}]: ${error.message}\n`;
+      fs.appendFileSync('errors.log', logMessage);
+    }).catch(() => {});
+
     // Otros errores de Prisma
     res.status(500).json({
       error: 'Error de base de datos',
-      message: 'Ocurrió un error al procesar la solicitud',
+      message: `Prisma Error [${error.code}]: ${error.message}`,
     });
     return;
   }

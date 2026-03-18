@@ -52,11 +52,11 @@ export async function register(
         email: data.email,
         // Al registro normal le faltan campos que ahora son obligatorios en el modelo expandido
         // Añadimos valores por defecto o necesarios
-        username: data.email, // Por defecto usamos el email como username
         passwordHash,
         name: data.name,
         isActive: false, // Debe activar por email
         activationToken,
+        acceptCommunications: data.acceptCommunications,
       },
       select: {
         id: true,
@@ -109,17 +109,6 @@ export async function manualRegister(
       return;
     }
 
-    // 2. Comprobar si el usuario ya existe
-    const existingUsername = await prisma.user.findUnique({
-      where: { username: data.username },
-    });
-    if (existingUsername) {
-      res.status(409).json({
-        error: "Conflicto",
-        message: "El nombre de usuario ya existe",
-      });
-      return;
-    }
 
     // 3. Comprobar si el DNI/NIF ya existe (solo para PARTICULARES)
     if (data.userType === "PARTICULAR" && data.dniNif) {
@@ -143,7 +132,6 @@ export async function manualRegister(
       data: {
         userType: data.userType as any, // Cast para evitar conflictos con el enum de Prisma si hay desfase
         email: data.email,
-        username: data.username,
         passwordHash,
         passwordReminder: data.passwordReminder,
         name: data.name,
@@ -168,7 +156,6 @@ export async function manualRegister(
       user: {
         id: user.id,
         email: user.email,
-        username: user.username,
         name: user.name,
         userType: user.userType,
         role: user.role,
@@ -286,7 +273,6 @@ export async function getMe(
       select: {
         id: true,
         email: true,
-        username: true,
         name: true,
         surname: true,
         dniNif: true,
@@ -377,7 +363,6 @@ export async function googleLogin(
       user = await prisma.user.create({
         data: {
           email: payload.email,
-          username: payload.email.split('@')[0] + "_" + Math.floor(Math.random() * 1000),
           googleId: payload.sub,
           name: payload.name || "Usuario Google",
           role: "USER",
@@ -518,10 +503,18 @@ export async function forgotPassword(
       where: { email },
     });
 
-    // Por seguridad, siempre respondemos "si existe, se enviará"
-    if (!user || user.googleId) {
-      res.status(200).json({
-        message: "Si el correo está registrado, recibirás un enlace de recuperación pronto.",
+    if (!user) {
+      res.status(401).json({
+        error: "No autorizado",
+        message: "El email no está registrado",
+      });
+      return;
+    }
+
+    if (user.googleId) {
+      res.status(401).json({
+        error: "No autorizado",
+        message: "Esta cuenta se registró con Google. Por favor, inicia sesión con Google.",
       });
       return;
     }

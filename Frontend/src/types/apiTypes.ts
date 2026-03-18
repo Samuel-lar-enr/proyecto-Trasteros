@@ -9,7 +9,6 @@ export type UserRole = 'USER' | 'ADMIN';
 export interface User {
   id: number;
   email: string;
-  username: string;
   name: string;
   surname?: string | null;
   dniNif?: string | null;
@@ -62,6 +61,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
+  acceptPrivacy: boolean;
+  acceptCommunications: boolean;
 }
 
 export interface LoginRequest {
@@ -93,7 +94,6 @@ export interface UpdateProfileRequest {
 
 export interface ManualRegisterRequest extends UpdateProfileRequest {
     email: string;
-    username: string;
     password: string;
     passwordReminder: string;
 }

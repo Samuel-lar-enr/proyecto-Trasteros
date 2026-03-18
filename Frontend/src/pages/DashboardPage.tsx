@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/context';
+import { useAuth } from '../contexts/authContext';
 
 const DashboardPage = () => {
   const navigate = useNavigate();

@@ -20,6 +20,12 @@ export const registerSchema = z.object({
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(255, 'El nombre es demasiado largo')
     .trim(),
+  acceptPrivacy: z
+    .boolean({ required_error: 'Debes aceptar la política de privacidad' })
+    .refine((val) => val === true, 'Debes aceptar la política de privacidad'),
+  acceptCommunications: z
+    .boolean()
+    .default(false),
 });
 
 // Validador de IBAN (simplificado pero sigue el formato estándar)
@@ -35,9 +41,9 @@ export const manualRegisterSchema = z.object({
     .email('Email inválido')
     .toLowerCase()
     .trim(),
-  username: z
-    .string({ required_error: 'El usuario es requerido' })
-    .min(3, 'El usuario debe tener al menos 3 caracteres')
+  name: z
+    .string({ required_error: 'El nombre es requerido' })
+    .min(3, 'El nombre debe tener al menos 3 caracteres')
     .trim(),
   password: z
     .string({ required_error: 'La clave es requerida' })
@@ -54,7 +60,6 @@ export const manualRegisterSchema = z.object({
   phone: z.string({ required_error: 'El teléfono es requerido' }).min(9).trim(),
   
   // Datos opcionales según tipo
-  name: z.string({ required_error: 'El nombre es requerido' }).min(2).trim(),
   surname: z.string().optional().or(z.literal('')), // Obligatorio para particular
   dniNif: z.string().optional().or(z.literal('')), // Obligatorio para particular
   
