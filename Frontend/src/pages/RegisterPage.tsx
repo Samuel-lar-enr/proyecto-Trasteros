@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/authContext';
@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import AuthLayout from '../components/AuthLayout';
 import { authService } from '../services/api';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
@@ -20,6 +21,8 @@ const RegisterPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [acceptPrivacy, setAcceptPrivacy] = useState(false);
     const [acceptCommunications, setAcceptCommunications] = useState(false);
+    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+    const recaptchaRef = useRef<ReCAPTCHA>(null);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -52,7 +55,12 @@ const RegisterPage = () => {
             setErrorMessage('Debes aceptar la política de privacidad');
             return false;
         }
-        
+
+        if (!recaptchaToken) {
+            setErrorMessage('El captcha no puede estar vacio');
+            return false;
+        }
+
         return true;
     };
 
@@ -75,6 +83,7 @@ const RegisterPage = () => {
                 name,
                 acceptPrivacy,
                 acceptCommunications,
+                recaptchaToken: recaptchaToken as string,
             });
 
             setRegisteredEmail(email); // Guardamos el email antes de limpiar
@@ -104,6 +113,10 @@ const RegisterPage = () => {
             } else {
                 setErrorMessage('No se pudo conectar con el servidor.');
             }
+            if (recaptchaRef.current) {
+                recaptchaRef.current.reset();
+                setRecaptchaToken(null);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -126,7 +139,7 @@ const RegisterPage = () => {
             {successMessage && (
                 <div style={{ padding: '12px 16px', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '4px', marginBottom: '16px', fontSize: '0.875rem', border: '1px solid #a7f3d0' }}>
                     <p>{successMessage}</p>
-                    <button 
+                    <button
                         onClick={handleResendActivation}
                         style={{ background: 'none', border: 'none', color: '#059669', textDecoration: 'underline', cursor: 'pointer', padding: 0, marginTop: '8px', fontSize: '0.75rem' }}
                     >
@@ -180,12 +193,20 @@ const RegisterPage = () => {
                     required
                 />
 
-                <div 
-                    style={{ 
-                        display: 'flex', 
-                        alignItems: 'baseline', 
-                        gap: '8px', 
-                        fontSize: '0.875rem', 
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', marginTop: '1rem' }}>
+                    <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'}
+                        onChange={(token) => setRecaptchaToken(token)}
+                    />
+                </div>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '8px',
+                        fontSize: '0.875rem',
                         marginBottom: '1rem',
                         marginTop: '0.5rem'
                     }}
@@ -205,12 +226,12 @@ const RegisterPage = () => {
                     </label>
                 </div>
 
-                <div 
-                    style={{ 
-                        display: 'flex', 
-                        alignItems: 'baseline', 
-                        gap: '8px', 
-                        fontSize: '0.875rem', 
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '8px',
+                        fontSize: '0.875rem',
                         marginBottom: '1rem',
                         marginTop: '0.5rem'
                     }}

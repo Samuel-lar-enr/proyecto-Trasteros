@@ -26,6 +26,9 @@ export const registerSchema = z.object({
   acceptCommunications: z
     .boolean()
     .default(false),
+  recaptchaToken: z
+    .string({ required_error: 'El token de reCAPTCHA es requerido' })
+    .min(1, 'Debes completar el captcha')
 });
 
 // Validador de IBAN (simplificado pero sigue el formato estándar)
@@ -52,17 +55,17 @@ export const manualRegisterSchema = z.object({
   passwordReminder: z
     .string({ required_error: 'La palabra recordatorio es requerida' })
     .min(2, 'La palabra recordatorio es demasiado corta'),
-  
+
   // Datos comunes
   address: z.string({ required_error: 'La dirección es requerida' }).min(5).trim(),
   population: z.string({ required_error: 'La población es requerida' }).min(2).trim(),
   province: z.string({ required_error: 'La provincia es requerida' }).min(2).trim(),
   phone: z.string({ required_error: 'El teléfono es requerido' }).min(9).trim(),
-  
+
   // Datos opcionales según tipo
   surname: z.string().optional().or(z.literal('')), // Obligatorio para particular
   dniNif: z.string().optional().or(z.literal('')), // Obligatorio para particular
-  
+
   commercialName: z.string().optional().or(z.literal('')), // Obligatorio para empresa
   nifCif: z.string().optional().or(z.literal('')), // Obligatorio para empresa
 
@@ -73,7 +76,7 @@ export const manualRegisterSchema = z.object({
   iban: z.string({ required_error: 'El IBAN es requerido' }).refine((val: string) => ibanRegex.test(val.replace(/\s/g, '')), {
     message: 'Formato de IBAN inválido',
   }),
-  
+
   observations: z.string().optional().or(z.literal('')),
 }).refine((data: any) => {
   if (data.userType === 'PARTICULAR') {

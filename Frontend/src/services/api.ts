@@ -1,15 +1,15 @@
 import axios from 'axios';
 import type {
-    LoginRequest,
-    RegisterRequest,
-    AuthResponse,
-    MeResponse,
-    UpdateProfileRequest,
-    GoogleLoginRequest,
-    GenericResponse,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-    ResendActivationRequest
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  MeResponse,
+  UpdateProfileRequest,
+  GoogleLoginRequest,
+  GenericResponse,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ResendActivationRequest
 } from '../types/apiTypes';
 
 /**

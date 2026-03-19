@@ -63,6 +63,7 @@ export interface RegisterRequest {
   name: string;
   acceptPrivacy: boolean;
   acceptCommunications: boolean;
+  recaptchaToken: string;
 }
 
 export interface LoginRequest {
@@ -93,9 +94,9 @@ export interface UpdateProfileRequest {
 }
 
 export interface ManualRegisterRequest extends UpdateProfileRequest {
-    email: string;
-    password: string;
-    passwordReminder: string;
+  email: string;
+  password: string;
+  passwordReminder: string;
 }
 
 export interface ForgotPasswordRequest {

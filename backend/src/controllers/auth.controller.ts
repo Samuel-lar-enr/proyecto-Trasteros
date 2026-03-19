@@ -27,6 +27,35 @@ export async function register(
     // Validar datos de entrada
     const data = registerSchema.parse(req.body);
 
+    // Validar reCAPTCHA v2 con la API de Google
+    const recaptchaToken = data.recaptchaToken;
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+
+    try {
+      const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `secret=${secretKey}&response=${recaptchaToken}`
+      });
+      const recaptchaData = await response.json() as Record<string, any>;
+
+      if (!recaptchaData.success) {
+        res.status(400).json({
+          error: "Captcha Inválido",
+          message: "No se pudo validar el Captcha de Google. Inténtalo de nuevo.",
+        });
+        return;
+      }
+    } catch (err) {
+      res.status(500).json({
+        error: "Captcha Error",
+        message: "Error de conexión al validar el captcha",
+      });
+      return;
+    }
+
     // Verificar si el email ya existe
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
@@ -73,7 +102,7 @@ export async function register(
 
     // En el registro con activación, no solemos enviar el token JWT de inmediato
     // pero aquí lo mantenemos si el front lo espera, o simplemente indicamos que debe activar.
-    
+
     // Responder indicando que debe activar la cuenta
     res.status(201).json({
       message: "Registro exitoso. Por favor, revisa tu email para activar tu cuenta.",
@@ -324,7 +353,7 @@ export async function googleLogin(
     // Nota: En desarrollo, si no tienes CLIENT_ID, esto fallará. 
     // Para facilitar pruebas podríamos simular si el token es "dummy-token"
     let payload;
-    
+
     if (idToken === "dummy-token-google" && process.env.NODE_ENV !== "production") {
       payload = {
         sub: "google-123",
@@ -373,7 +402,7 @@ export async function googleLogin(
       // Vincular cuenta existente si no tiene googleId
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { 
+        data: {
           googleId: payload.sub,
         }
       });
