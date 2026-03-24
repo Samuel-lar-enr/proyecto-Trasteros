@@ -6,10 +6,11 @@ import { useAuth } from '../contexts/authContext';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import AuthLayout from '../components/AuthLayout';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, loginWithGoogle, isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,6 +75,26 @@ const LoginPage = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setErrorMessage('No se pudo obtener la identidad de Google.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      navigate('/dashboard');
+    } catch (error) {
+      setErrorMessage('Error al autenticar con Google. Inténtalo de nuevo.');
+      console.error('Google login error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <AuthLayout encabezado="Acceso Boxen" titulo="Iniciar sesión" subtitulo="Accede con tu usuario y contraseña.">
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -121,7 +142,16 @@ const LoginPage = () => {
         </div>
       )}
 
-      <Button variant="secondary" type="button" disabled>Continuar con Google (próximamente)</Button>
+      <div className="google-login-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setErrorMessage('Error al iniciar sesión con Google')}
+          useOneTap
+          theme="outline"
+          shape="rectangular"
+          width="100%"
+        />
+      </div>
 
       <nav className="auth-links" aria-label="Enlaces de acceso">
         <Link to="/register">Crear usuario</Link>

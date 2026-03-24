@@ -15,6 +15,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   login: (data: LoginRequest) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -57,6 +58,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(me.user);
   }, []);
 
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    await authService.googleLogin({ idToken });
+    const me = await authService.getMe();
+    setUser(me.user);
+  }, []);
+
   const logout = useCallback(() => {
     authService.logout();
     setUser(null);
@@ -68,9 +75,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isAuthenticated: Boolean(user),
       isBootstrapping,
       login,
+      loginWithGoogle,
       logout,
     }),
-    [user, isBootstrapping, login, logout],
+    [user, isBootstrapping, login, loginWithGoogle, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
