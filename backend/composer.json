@@ -9,12 +9,11 @@
         }
     },
     "require": {
-        "firebase/php-jwt": "^5.5",
+        "firebase/php-jwt": "^6.11",
         "google/apiclient": "^2.14",
         "phpmailer/phpmailer": "^7.0",
         "slim/psr7": "^1.8",
         "slim/slim": "^4.15",
-        "tuupola/slim-jwt-auth": "^3.7",
         "vlucas/phpdotenv": "^5.6"
     },
     "config": {
