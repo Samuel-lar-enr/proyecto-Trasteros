@@ -27,7 +27,7 @@ export async function createInvoice(req: Request, res: Response, next: NextFunct
 }
 
 /**
- * Generate invoices for all active contracts for a specific month and year
+ * Generate invoices for all active contracts for a specific month and year with SEQUENTIAL numbering
  */
 export async function generateMonthlyInvoices(req: Request, res: Response, next: NextFunction) {
   try {
@@ -45,24 +45,43 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
       return;
     }
 
+    // 2. Find the last invoice number for this year to continue the sequence
+    const lastInvoice = await prisma.invoice.findFirst({
+      where: { series, date: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) } },
+      orderBy: { id: 'desc' },
+    });
+
+    let currentSequence = 0;
+    if (lastInvoice && lastInvoice.number.includes('-')) {
+      const parts = lastInvoice.number.split('-');
+      currentSequence = parseInt(parts[parts.length - 1]) || 0;
+    }
+
     let createdCount = 0;
     const errors: string[] = [];
 
-    // 2. Iterate and generate invoices
+    // 3. Process each contract
     for (const contract of activeContracts) {
       try {
-        const monthStr = String(month).padStart(2, '0');
-        const invoiceNumber = `${series}-${year}${monthStr}-${contract.id}`;
+        // --- PREVENTION: Check if an invoice for this unit/month already exists ---
+        const firstDayOfMonth = new Date(year, month - 1, 1);
+        const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59);
 
-        // Check if invoice already exists for this unit in this month/year
-        const existingInvoice = await prisma.invoice.findUnique({
-          where: { number: invoiceNumber }
+        const alreadyInvoiced = await prisma.invoice.findFirst({
+          where: {
+            storageUnitId: contract.storageUnitId,
+            date: { gte: firstDayOfMonth, lte: lastDayOfMonth }
+          }
         });
 
-        if (existingInvoice) {
-          errors.push(`Contrato #${contract.id} ya tiene factura generada para este periodo`);
+        if (alreadyInvoiced) {
+          errors.push(`Trastero ${contract.storageUnit.number} ya facturado este periodo.`);
           continue;
         }
+
+        // --- CALCULATION AND NUMBERING ---
+        currentSequence++;
+        const invoiceNumber = `${series}-${year}-${String(currentSequence).padStart(4, '0')}`;
 
         const price = Number(contract.currentPrice);
         const taxBase = price / (1 + vatRate);
@@ -88,7 +107,7 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
     }
 
     res.status(201).json({ 
-      message: `Proceso completado: ${createdCount} facturas generadas`,
+      message: `¡Facturación terminada! ${createdCount} facturas nuevas generadas.`,
       createdCount,
       errors: errors.length > 0 ? errors : undefined
     });
