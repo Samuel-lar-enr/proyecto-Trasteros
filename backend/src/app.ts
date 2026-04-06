@@ -1,7 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Configuración de la aplicación Express
@@ -58,16 +63,30 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 
 // ========================================
-// MANEJO DE ERRORES
+// FRONTEND ESTÁTICO
 // ========================================
 
-// Ruta no encontrada (404)
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'No encontrado',
-    message: `La ruta ${req.method} ${req.path} no existe`,
+// Sirve los ficheros del build de React
+const frontendPath = path.join(__dirname, 'public');
+app.use(express.static(frontendPath));
+
+// SPA fallback: cualquier ruta que no sea /api devuelve index.html
+// para que react-router-dom maneje la navegación en el cliente
+app.get('*', (req, res) => {
+  const indexFile = path.join(frontendPath, 'index.html');
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      res.status(404).json({
+        error: 'No encontrado',
+        message: `La ruta ${req.method} ${req.path} no existe`,
+      });
+    }
   });
 });
+
+// ========================================
+// MANEJO DE ERRORES
+// ========================================
 
 // Middleware de manejo de errores (debe ir al final)
 app.use(errorHandler);
