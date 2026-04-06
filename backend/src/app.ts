@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
 import storageRoutes from './routes/storage.routes.js';
 import contractRoutes from './routes/contract.routes.js';
+import invoiceRoutes from './routes/invoice.routes.js';
+import ipcRoutes from './routes/ipc.routes.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +51,8 @@ app.get('/', (_req, res) => {
       auth: '/api/auth',
       storage: '/api/storage',
       contracts: '/api/contracts',
+      invoices: '/api/invoices',
+      ipc: '/api/ipc',
     },
     docs: 'Ver README.md para documentación completa',
   });
@@ -67,6 +71,8 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/storage', storageRoutes);
 app.use('/api/contracts', contractRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/ipc', ipcRoutes);
 
 // ========================================
 // FRONTEND ESTÁTICO
