@@ -19,51 +19,163 @@ enum Role {
   ADMIN
 }
 
-// Modelo de Usuario para autenticación y contratos
+// User model for authentication and relations
 model User {
   id               Int      @id @default(autoincrement())
   userType         UserType @default(PARTICULAR) @map("user_type")
   role             Role     @default(USER) @map("role")
   
-  // Autenticación
+  // Authentication
   email            String   @unique
-  passwordHash     String?  @map("password_hash") // Opcional si usa Google
+  passwordHash     String?  @map("password_hash")
   googleId         String?  @unique @map("google_id")
   passwordReminder String?  @map("password_reminder")
-  isActive             Boolean  @default(false) @map("is_active")
-  activationToken      String?  @unique @map("activation_token")
+  isActive         Boolean  @default(false) @map("is_active")
+  activationToken  String?  @unique @map("activation_token")
   resetPasswordToken   String?  @unique @map("reset_password_token")
   resetPasswordExpires DateTime? @map("reset_password_expires")
   
-  // Datos Personales (PARTICULAR)
-  name             String   // Nombre
-  surname          String?  @map("surname") // Apellidos
-  dniNif           String?  @unique @map("dni_nif") // DNI/NIF para particulares
+  // Personal Data (PARTICULAR)
+  name             String
+  surname          String?  @map("surname")
+  dniNif           String?  @unique @map("dni_nif")
   
-  // Datos de Empresa (EMPRESA)
-  commercialName   String?  @map("commercial_name") // Nombre Comercial
-  nifCif           String?  @map("nif_cif") // NIF/CIF para empresas
+  // Company Data (EMPRESA)
+  commercialName   String?  @map("commercial_name")
+  nifCif           String?  @map("nif_cif")
   
-  // Dirección y Contacto
-  address          String?  @map("address") // Dirección
-  population       String?  @map("population") // Población
-  province         String?  @map("province") // Provincia
-  phone            String?  @map("phone") // Teléfono
+  // Address and Contact
+  address          String?  @map("address")
+  population       String?  @map("population")
+  province         String?  @map("province")
+  phone            String?  @map("phone")
   
-  // Datos Bancarios
-  paymentMethod    String?  @map("payment_method") // Forma de pago
-  bank             String?  @map("bank") // Banco
-  bicSwift         String?  @map("bic_swift") // BIC/SWIFT
-  iban             String?  @map("iban") // IBAN
+  // Bank Data
+  paymentMethod    String?  @map("payment_method")
+  bank             String?  @map("bank")
+  bicSwift         String?  @map("bic_swift")
+  iban             String?  @map("iban")
   
-  // Otros
-  observations     String?  @db.Text @map("observations") // Observaciones
+  // Others
+  observations     String?  @db.Text @map("observations")
   
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
   acceptCommunications Boolean  @default(false) @map("accept_communications")
 
+  // Relations
+  contracts        Contract[]
+  invoices         Invoice[]
+
   @@map("users")
+}
+
+model StorageType {
+  id           Int      @id @default(autoincrement())
+  description  String
+  storageUnits StorageUnit[]
+
+  @@map("storage_types")
+}
+
+enum StorageStatus {
+  FREE
+  OCCUPIED
+  RESERVED
+  NOT_AVAILABLE
+}
+
+model StorageUnit {
+  id           Int            @id @default(autoincrement())
+  number       String         @unique
+  typeId       Int            @map("type_id")
+  type         StorageType    @relation(fields: [typeId], references: [id])
+  price        Decimal        @db.Decimal(10, 2)
+  m2           Decimal        @db.Decimal(10, 2)
+  m3           Decimal    @db.Decimal(10, 2)
+  location     String     // City/Building/Address as simple text
+  status       StorageStatus  @default(FREE)
+  observations String?        @db.Text
+  
+  contracts    Contract[]
+  invoices     Invoice[]
+  ipcHistory   IpcHistory[]
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  @@map("storage_units")
+}
+
+model Contract {
+  id                Int          @id @default(autoincrement())
+  userId            Int          @map("user_id")
+  user              User         @relation(fields: [userId], references: [id])
+  storageUnitId     Int          @map("storage_unit_id")
+  storageUnit       StorageUnit  @relation(fields: [storageUnitId], references: [id])
+  startDate         DateTime     @map("start_date")
+  endDate           DateTime?    @map("end_date")
+  content           String?      @db.Text
+  insuranceCoverage Decimal?     @map("insurance_coverage") @db.Decimal(10, 2)
+  currentPrice      Decimal      @map("current_price") @db.Decimal(10, 2)
+  isActive          Boolean      @default(true) @map("is_active")
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("contracts")
+}
+
+enum InvoiceStatus {
+  PAID
+  PENDING
+  RETURNED
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  date          DateTime      @default(now())
+  number        String        @unique
+  series        String?       // Invoicing series (e.g., "A")
+  userId        Int           @map("user_id")
+  user          User          @relation(fields: [userId], references: [id])
+  storageUnitId Int           @map("storage_unit_id")
+  storageUnit   StorageUnit   @relation(fields: [storageUnitId], references: [id])
+  taxBase       Decimal       @map("tax_base") @db.Decimal(10, 2)
+  vatAmount     Decimal       @map("vat_amount") @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  status        InvoiceStatus @default(PENDING)
+  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("invoices")
+}
+
+model IpcBatch {
+  id           Int          @id @default(autoincrement())
+  date         DateTime     @default(now())
+  percentage   Decimal      @db.Decimal(5, 2)
+  observations String?      @db.Text
+  history      IpcHistory[]
+
+  @@map("ipc_batches")
+}
+
+model IpcHistory {
+  id                Int          @id @default(autoincrement())
+  batchId           Int          @map("batch_id")
+  batch             IpcBatch     @relation(fields: [batchId], references: [id])
+  storageUnitId     Int          @map("storage_unit_id")
+  storageUnit       StorageUnit  @relation(fields: [storageUnitId], references: [id])
+  oldPrice          Decimal      @map("old_price") @db.Decimal(10, 2)
+  newPrice          Decimal      @map("new_price") @db.Decimal(10, 2)
+  difference        Decimal      @db.Decimal(10, 2)
+  oldContractPrice  Decimal      @map("old_contract_price") @db.Decimal(10, 2)
+  newContractPrice  Decimal      @map("new_contract_price") @db.Decimal(10, 2)
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  @@map("ipc_history")
 }
 
 

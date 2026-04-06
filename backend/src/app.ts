@@ -3,6 +3,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
+import storageRoutes from './routes/storage.routes.js';
+import contractRoutes from './routes/contract.routes.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,10 +43,12 @@ app.use(express.urlencoded({ extended: true }));
 // Ruta de health check
 app.get('/', (_req, res) => {
   res.json({
-    message: '🚀 API de Autenticación funcionando correctamente',
+    message: '🚀 API de Boxen funcionando correctamente',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
+      storage: '/api/storage',
+      contracts: '/api/contracts',
     },
     docs: 'Ver README.md para documentación completa',
   });
@@ -61,6 +65,8 @@ app.get('/health', (_req, res) => {
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
+app.use('/api/storage', storageRoutes);
+app.use('/api/contracts', contractRoutes);
 
 // ========================================
 // FRONTEND ESTÁTICO
