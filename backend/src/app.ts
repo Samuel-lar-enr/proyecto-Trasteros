@@ -23,23 +23,22 @@ const app = express();
 // ========================================
 
 // CORS - Permite peticiones desde cualquier origen (desarrollo)
-// En producción, configurar allowedOrigins específicos
 app.use(
   cors({
-    origin: '*', // Permite cualquier origen (ideal para desarrollo)
+    origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
-// Parser de JSON - Convierte el body de las peticiones a JSON
+// Parser de JSON
 app.use(express.json());
 
-// Parser de URL-encoded - Para formularios
+// Parser de URL-encoded
 app.use(express.urlencoded({ extended: true }));
 
 // ========================================
-// RUTAS
+// RUTAS DE LA API
 // ========================================
 
 // Ruta de health check
@@ -67,7 +66,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// Rutas de la API
+// Registrar rutas de la API bajo /api
 app.use('/api/auth', authRoutes);
 app.use('/api/storage', storageRoutes);
 app.use('/api/contracts', contractRoutes);
@@ -75,16 +74,20 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/ipc', ipcRoutes);
 
 // ========================================
-// FRONTEND ESTÁTICO
+// FRONTEND ESTÁTICO Y SPA FALLBACK
 // ========================================
 
 // Sirve los ficheros del build de React
 const frontendPath = path.join(__dirname, 'public');
 app.use(express.static(frontendPath));
 
-// SPA fallback: cualquier ruta que no sea /api devuelve index.html
-// para que react-router-dom maneje la navegación en el cliente
-app.get('*', (req, res) => {
+// SPA fallback: cualquier ruta que no sea de la API o estática devuelve index.html
+app.use((req, res, next) => {
+  // Si la petición es para el API, no devolvemos el index.html
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+
   const indexFile = path.join(frontendPath, 'index.html');
   res.sendFile(indexFile, (err) => {
     if (err) {
