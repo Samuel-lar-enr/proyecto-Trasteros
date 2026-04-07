@@ -45,9 +45,14 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
       return;
     }
 
-    // 2. Find the last invoice number for this year to continue the sequence
+    // 2. Find the last invoice number OF THE SPECIFIC YEAR to continue sequence or start at 0
     const lastInvoice = await prisma.invoice.findFirst({
-      where: { series, date: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) } },
+      where: {
+        date: {
+          gte: new Date(year, 0, 1),
+          lt: new Date(year + 1, 0, 1)
+        }
+      },
       orderBy: { id: 'desc' },
     });
 
@@ -81,7 +86,8 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
 
         // --- CALCULATION AND NUMBERING ---
         currentSequence++;
-        const invoiceNumber = `${series}-${year}-${String(currentSequence).padStart(4, '0')}`;
+        // const invoiceNumber = `${series}-${year}-${String(currentSequence).padStart(4, '0')}`;
+        const invoiceNumber = `${year}-${String(currentSequence).padStart(4, '0')}`;
 
         const price = Number(contract.currentPrice);
         const taxBase = price / (1 + vatRate);

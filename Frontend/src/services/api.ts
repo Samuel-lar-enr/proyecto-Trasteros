@@ -9,7 +9,15 @@ import type {
   GenericResponse,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-  ResendActivationRequest
+  ResendActivationRequest,
+  StorageUnit,
+  Contract,
+  Invoice,
+  CreateContractRequest,
+  BatchGenerateInvoicesRequest,
+  IpcBatch,
+  ApplyIpcRequest,
+  UpdateStorageUnitRequest
 } from '../types/apiTypes';
 
 /**
@@ -120,6 +128,82 @@ export const authService = {
    */
   logout: () => {
     localStorage.removeItem('token');
+  }
+};
+
+/**
+ * Servicios de Trasteros
+ */
+export const storageService = {
+  getAll: async (filters?: any): Promise<{ storageUnits: StorageUnit[] }> => {
+    const res = await api.get('/storage-units', { params: filters });
+    return res.data;
+  },
+  getOne: async (id: number): Promise<{ storageUnit: StorageUnit }> => {
+    const res = await api.get(`/storage-units/${id}`);
+    return res.data;
+  },
+  update: async (id: number, data: UpdateStorageUnitRequest): Promise<{ message: string, storageUnit: StorageUnit }> => {
+    const res = await api.put(`/storage-units/${id}`, data);
+    return res.data;
+  },
+  delete: async (id: number): Promise<{ message: string }> => {
+    const res = await api.delete(`/storage-units/${id}`);
+    return res.data;
+  }
+};
+
+/**
+ * Servicios de Contratos
+ */
+export const contractService = {
+  getAll: async (filters?: any): Promise<{ contracts: Contract[] }> => {
+    const res = await api.get('/contracts', { params: filters });
+    return res.data;
+  },
+  create: async (data: CreateContractRequest): Promise<{ message: string, contract: Contract }> => {
+    const res = await api.post('/contracts', data);
+    return res.data;
+  },
+  terminate: async (id: number): Promise<{ message: string }> => {
+    const res = await api.put(`/contracts/${id}/terminate`);
+    return res.data;
+  }
+};
+
+/**
+ * Servicios de Facturación
+ */
+export const invoiceService = {
+  getAll: async (filters?: any): Promise<{ invoices: Invoice[] }> => {
+    const res = await api.get('/invoices', { params: filters });
+    return res.data;
+  },
+  batchGenerate: async (data: BatchGenerateInvoicesRequest): Promise<{ message: string, createdCount: number, errors?: string[] }> => {
+    const res = await api.post('/invoices/batch-generate', data);
+    return res.data;
+  },
+  updateStatus: async (id: number, status: string): Promise<GenericResponse> => {
+    const res = await api.put(`/invoices/${id}/status`, { status });
+    return res.data;
+  }
+};
+
+/**
+ * Servicios de IPC
+ */
+export const ipcService = {
+  apply: async (data: ApplyIpcRequest): Promise<{ message: string, details: any }> => {
+    const res = await api.post('/ipc/apply', data);
+    return res.data;
+  },
+  getHistory: async (): Promise<{ batches: IpcBatch[] }> => {
+    const res = await api.get('/ipc/batches');
+    return res.data;
+  },
+  getBatchDetails: async (id: number): Promise<{ batch: IpcBatch }> => {
+    const res = await api.get(`/ipc/batches/${id}`);
+    return res.data;
   }
 };
 

@@ -87,6 +87,9 @@ export async function getStorageUnit(req: Request, res: Response, next: NextFunc
         contracts: {
           include: { user: true },
           where: { isActive: true }
+        },
+        invoices: {
+          orderBy: { date: 'desc' }
         }
       },
     });
