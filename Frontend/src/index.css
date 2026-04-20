@@ -148,6 +148,238 @@ input:focus {
 	text-decoration: underline;
 }
 
+/* Navbar */
+.navbar {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 1rem;
+}
+
+.navbar-link {
+  color: #1e3a8a;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+.navbar-link:hover {
+  background: #e8eef8;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Table */
+.trasteros-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter Section */
+.filter-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  width: fit-content;
+}
+
+.filter-label {
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.filter-label.active {
+  color: #059669; /* green-600 */
+}
+
+.reset-btn {
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: fit-content;
+}
+
+.reset-btn:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.reset-btn:active {
+  transform: translateY(0);
+}
+
+.filter-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  appearance: none;
+  background-color: white;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filter-checkbox:checked {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.filter-checkbox:checked::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background-color: white;
+}
+
+.filter-checkbox:hover {
+  border-color: #059669;
+  transform: scale(1.05);
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-badge.free {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.occupied {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-badge.reserved {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+
+.status-badge.not-available {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.trasteros-table th,
+.trasteros-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trasteros-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trasteros-table th:hover {
+  background: #e5e7eb;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clickable-row:hover {
+  background: #f9fafb;
+}
+
+/* Search input */
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #c5d2e6;
+  border-radius: 5px;
+}
+
+/* Detail card */
+.detail-card {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.detail-card p {
+  margin: 0.5rem 0;
+}
+
+/* Navigation buttons */
+.navigation-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #c5d2e6;
+  background: #f3f4f6;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .center-link {
 	display: inline-block;
 }

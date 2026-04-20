@@ -136,19 +136,19 @@ export const authService = {
  */
 export const storageService = {
   getAll: async (filters?: any): Promise<{ storageUnits: StorageUnit[] }> => {
-    const res = await api.get('/storage-units', { params: filters });
+    const res = await api.get('/storage/units', { params: filters });
     return res.data;
   },
   getOne: async (id: number): Promise<{ storageUnit: StorageUnit }> => {
-    const res = await api.get(`/storage-units/${id}`);
+    const res = await api.get(`/storage/units/${id}`);
     return res.data;
   },
   update: async (id: number, data: UpdateStorageUnitRequest): Promise<{ message: string, storageUnit: StorageUnit }> => {
-    const res = await api.put(`/storage-units/${id}`, data);
+    const res = await api.patch(`/storage/units/${id}`, data);
     return res.data;
   },
   delete: async (id: number): Promise<{ message: string }> => {
-    const res = await api.delete(`/storage-units/${id}`);
+    const res = await api.delete(`/storage/units/${id}`);
     return res.data;
   }
 };

@@ -21,7 +21,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate('/main-example', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -34,7 +34,7 @@ const LoginPage = () => {
 
     try {
       await login({ email, password });
-      navigate('/dashboard');
+      navigate('/main-example');
     } catch (error) {
       if (isAxiosError(error) && error.response) {
         if (error.response.status === 401) {
@@ -86,7 +86,7 @@ const LoginPage = () => {
 
     try {
       await loginWithGoogle(credentialResponse.credential);
-      navigate('/dashboard');
+      navigate('/main-example');
     } catch (error) {
       setErrorMessage('Error al autenticar con Google. Inténtalo de nuevo.');
       console.error('Google login error:', error);

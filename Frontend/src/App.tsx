@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/authContext';
+import { TrasterosProvider } from './contexts/TrasterosContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ActivationPage from './pages/ActivationPage';
@@ -11,11 +12,13 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import MarketingPolicyPage from './pages/MarketingPolicyPage';
 import TrasterosList from './pages/TrasterosList';
 import TrasteroDetail from './pages/TrasteroDetail';
+import MainPageExample from './pages/MainPageExample';
 
 const App = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <TrasterosProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/activate/:token" element={<ActivationPage />} />
@@ -24,6 +27,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/main-example"
+            element={
+              <ProtectedRoute>
+                <MainPageExample />
               </ProtectedRoute>
             }
           />
@@ -48,10 +59,11 @@ const App = () => {
           <Route path="/marketing-policy" element={<MarketingPolicyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/main-example" replace />} />
+          <Route path="*" element={<Navigate to="/main-example" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </TrasterosProvider>
     </AuthProvider>
   );
 };

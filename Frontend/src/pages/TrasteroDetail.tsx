@@ -1,14 +1,45 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTrasteroById, getTrasteros } from '../services/trasteroService';
+import { useTrasteros } from '../contexts/TrasterosContext';
 import NavBar from '../components/NavBar';
 
 const TrasteroDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { getTrasteroById, trasteros: allTrasteros, loading, error } = useTrasteros();
     const trasteroId = parseInt(id || '0');
     const trastero = getTrasteroById(trasteroId);
-    const allTrasteros = getTrasteros();
     const currentIndex = allTrasteros.findIndex(t => t.id === trasteroId);
+
+    const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'FREE': return 'free';
+      case 'OCCUPIED': return 'occupied';
+      case 'RESERVED': return 'reserved';
+      case 'NOT_AVAILABLE': return 'not-available';
+      default: return '';
+    }}
+
+    if (loading) {
+        return (
+            <div>
+                <NavBar />
+                <div className="container">
+                    <h1>Cargando...</h1>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div>
+                <NavBar />
+                <div className="container">
+                    <h1>Error: {error}</h1>
+                </div>
+            </div>
+        );
+    }
 
     if (!trastero) {
         return (
@@ -39,14 +70,14 @@ const TrasteroDetail = () => {
             <div className="container">
                 <h1>Detalle del Trastero</h1>
                 <div className="detail-card">
-                    <p><strong>Número:</strong> {trastero.numero}</p>
-                    <p><strong>M2:</strong> {trastero.m2}</p>
-                    <p><strong>Nombre del Cliente:</strong> {trastero.clienteNombre}</p>
-                    <p><strong>Precio:</strong> {trastero.precio}€</p>
-                    <p><strong>Estado:</strong> {trastero.estado}</p>
-                    {trastero.descripcion && <p><strong>Descripción:</strong> {trastero.descripcion}</p>}
-                    {trastero.ubicacion && <p><strong>Ubicación:</strong> {trastero.ubicacion}</p>}
-                    {trastero.fechaCreacion && <p><strong>Fecha de Creación:</strong> {trastero.fechaCreacion}</p>}
+                    <p><strong>Número:</strong> {trastero.number}</p>
+                    <p><strong>Metros cuadrados:</strong> {trastero.m2}m²</p>
+                    <p><strong>Metros cúbicos:</strong> {trastero.m3}m³</p>
+                    <p><strong>Precio:</strong> {trastero.price}€</p>
+                    <p><strong>Estado:</strong> <span className={`status-badge ${getStatusClass(trastero.status)}`}>{trastero.status}</span></p>
+                    {trastero.location && <p><strong>Ubicación:</strong> {trastero.location}</p>}
+                    {trastero.observations && <p><strong>Observaciones:</strong> {trastero.observations}</p>}
+                    {/* {trastero.createdAt && <p><strong>Fecha de Creación:</strong> {new Date(trastero.createdAt).toLocaleDateString()}</p>} */}
                 </div>
                 <div className="navigation-buttons">
                     <button onClick={handlePrevious} disabled={currentIndex === 0} className="nav-btn">Anterior</button>
