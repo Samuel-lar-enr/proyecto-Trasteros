@@ -9,6 +9,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import MarketingPolicyPage from './pages/MarketingPolicyPage';
+import TrasterosList from './pages/TrasterosList';
+import TrasteroDetail from './pages/TrasteroDetail';
 
 const App = () => {
   return (
@@ -25,13 +27,29 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/trasteros"
+            element={
+              <ProtectedRoute>
+                <TrasterosList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trasteros/:id"
+            element={
+              <ProtectedRoute>
+                <TrasteroDetail />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/marketing-policy" element={<MarketingPolicyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
