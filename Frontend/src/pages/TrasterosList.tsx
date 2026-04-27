@@ -230,46 +230,6 @@ const TrasterosList = () => {
         )}
       </div>
 
-      <style>{`
-        .search-section {
-          margin-bottom: 2rem;
-        }
-
-        .search-inputs {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-          .search-inputs {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        .search-input {
-          padding: 0.75rem;
-          border: 2px solid #e0e0e0;
-          border-radius: 6px;
-          font-size: 1rem;
-          transition: border-color 0.3s;
-        }
-
-        .edit-btn {
-          background: #4f46e5;
-          color: white;
-          border: none;
-          padding: 0.5rem;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 1rem;
-          transition: background-color 0.2s;
-        }
-
-        .edit-btn:hover {
-          background: #3730a3;
-        }
-      `}</style>
     </div>
   );
 };

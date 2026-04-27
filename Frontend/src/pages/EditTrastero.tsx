@@ -76,6 +76,17 @@ const EditTrastero: React.FC = () => {
         }
       }
 
+      // Check if status is changing FROM OCCUPIED to any other status
+      if (trastero?.status === 'OCCUPIED' && formData.status !== 'OCCUPIED') {
+        const confirmChange = window.confirm(
+          'Hay un contrato activo sobre este trastero. ¿Está seguro de que desea cambiar su estado? Necesita confirmar para proceder.'
+        );
+        if (!confirmChange) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const data: UpdateStorageUnitRequest = {
         typeId: parseInt(formData.typeId.toString()),
         price: parseFloat(formData.price),
