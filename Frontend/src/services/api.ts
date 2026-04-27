@@ -11,10 +11,12 @@ import type {
   ResetPasswordRequest,
   ResendActivationRequest,
   StorageUnit,
+  StorageType,
   Contract,
   Invoice,
   CreateContractRequest,
   CreateStorageUnitRequest,
+  CreateStorageTypeRequest,
   BatchGenerateInvoicesRequest,
   IpcBatch,
   ApplyIpcRequest,
@@ -154,6 +156,14 @@ export const storageService = {
   },
   delete: async (id: number): Promise<{ message: string }> => {
     const res = await api.delete(`/storage/units/${id}`);
+    return res.data;
+  },
+  getAllTypes: async (): Promise<{ storageTypes: StorageType[] }> => {
+    const res = await api.get('/storage/types');
+    return res.data;
+  },
+  createType: async (data: CreateStorageTypeRequest): Promise<{ message: string, storageType: StorageType }> => {
+    const res = await api.post('/storage/types', data);
     return res.data;
   }
 };

@@ -261,3 +261,7 @@ export interface UpdateStorageUnitRequest {
   status?: StorageStatus;
   observations?: string;
 }
+
+export interface CreateStorageTypeRequest {
+  description: string;
+}

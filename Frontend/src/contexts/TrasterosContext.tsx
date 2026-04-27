@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { StorageUnit } from '../types/apiTypes';
+import type { StorageUnit, StorageType } from '../types/apiTypes';
 import { storageService } from '../services/api';
 
 interface TrasterosContextType {
   trasteros: StorageUnit[];
+  types: StorageType[];
   loading: boolean;
+  loadingTypes: boolean;
   error: string | null;
   refreshTrasteros: () => Promise<void>;
+  refreshTypes: () => Promise<void>;
   getTrasteroById: (id: number) => StorageUnit | undefined;
 }
 
@@ -15,7 +18,9 @@ const TrasterosContext = createContext<TrasterosContextType | undefined>(undefin
 
 export const TrasterosProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [trasteros, setTrasteros] = useState<StorageUnit[]>([]);
+  const [types, setTypes] = useState<StorageType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingTypes, setLoadingTypes] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTrasteros = async () => {
@@ -23,11 +28,9 @@ export const TrasterosProvider: React.FC<{ children: ReactNode }> = ({ children 
     setError(null);
     try {
       const response = await storageService.getAll();
-      // Verificamos si la respuesta tiene la estructura esperada
       if (response && response.storageUnits) {
         setTrasteros(response.storageUnits);
       } else if (Array.isArray(response)) {
-        // Por si acaso la API devuelve directamente el array
         setTrasteros(response);
       }
     } catch (err) {
@@ -38,12 +41,31 @@ export const TrasterosProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
+  const fetchTypes = async () => {
+    setLoadingTypes(true);
+    try {
+      const response = await storageService.getAllTypes();
+      if (response && response.storageTypes) {
+        setTypes(response.storageTypes);
+      }
+    } catch (err) {
+      console.error('Error fetching types:', err);
+    } finally {
+      setLoadingTypes(false);
+    }
+  };
+
   useEffect(() => {
     fetchTrasteros();
+    fetchTypes();
   }, []);
 
   const refreshTrasteros = async () => {
     await fetchTrasteros();
+  };
+
+  const refreshTypes = async () => {
+    await fetchTypes();
   };
 
   const findTrasteroById = (id: number) => {
@@ -53,9 +75,12 @@ export const TrasterosProvider: React.FC<{ children: ReactNode }> = ({ children 
   return (
     <TrasterosContext.Provider value={{ 
       trasteros, 
+      types,
       loading, 
+      loadingTypes,
       error, 
       refreshTrasteros, 
+      refreshTypes,
       getTrasteroById: findTrasteroById 
     }}>
       {children}

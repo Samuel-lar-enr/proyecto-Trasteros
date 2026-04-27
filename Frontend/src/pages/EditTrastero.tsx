@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { storageService } from '../services/api';
+import { useTrasteros } from '../contexts/TrasterosContext';
 import type { StorageUnit, UpdateStorageUnitRequest } from '../types/apiTypes';
 
 const EditTrastero: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { types, loadingTypes, refreshTypes } = useTrasteros();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [trastero, setTrastero] = useState<StorageUnit | null>(null);
+  const [isNewType, setIsNewType] = useState(false);
 
   const [formData, setFormData] = useState({
-    typeId: 1,
+    typeId: '',
+    newTypeName: '',
     price: '',
     m2: '',
     m3: '',
@@ -31,7 +35,8 @@ const EditTrastero: React.FC = () => {
 
         // Populate form with existing data
         setFormData({
-          typeId: response.storageUnit.typeId,
+          typeId: response.storageUnit.typeId.toString(),
+          newTypeName: '',
           price: response.storageUnit.price.toString(),
           m2: response.storageUnit.m2.toString(),
           m3: response.storageUnit.m3.toString(),
@@ -51,6 +56,15 @@ const EditTrastero: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    if (name === 'typeId') {
+      if (value === 'NEW') {
+        setIsNewType(true);
+      } else {
+        setIsNewType(false);
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -87,8 +101,20 @@ const EditTrastero: React.FC = () => {
         }
       }
 
+      let finalTypeId = parseInt(formData.typeId);
+
+      // Si es un nuevo tipo, crearlo primero
+      if (isNewType) {
+        if (!formData.newTypeName.trim()) {
+          throw new Error('El nombre del nuevo tipo es requerido');
+        }
+        const typeRes = await storageService.createType({ description: formData.newTypeName });
+        finalTypeId = typeRes.storageType.id;
+        await refreshTypes(); // Actualizar tipos en el contexto global
+      }
+
       const data: UpdateStorageUnitRequest = {
-        typeId: parseInt(formData.typeId.toString()),
+        typeId: finalTypeId,
         price: parseFloat(formData.price),
         m2: parseFloat(formData.m2),
         m3: parseFloat(formData.m3),
@@ -100,7 +126,7 @@ const EditTrastero: React.FC = () => {
       await storageService.update(parseInt(id), data);
       navigate('/trasteros');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar el trastero');
+      setError(err.response?.data?.message || err.message || 'Error al actualizar el trastero');
     } finally {
       setLoading(false);
     }
@@ -159,22 +185,44 @@ const EditTrastero: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className={isNewType ? 'md:col-span-2' : ''}>
                   <label htmlFor="typeId" className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo de Trastero *
                   </label>
-                  <select
-                    id="typeId"
-                    name="typeId"
-                    value={formData.typeId}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value={1}>Estándar</option>
-                    <option value={2}>Premium</option>
-                    <option value={3}>Grande</option>
-                  </select>
+                  <div className={`grid gap-4 ${isNewType ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    <select
+                      id="typeId"
+                      name="typeId"
+                      value={formData.typeId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      {loadingTypes ? (
+                        <option>Cargando tipos...</option>
+                      ) : (
+                        <>
+                          {types.map(t => (
+                            <option key={t.id} value={t.id}>{t.description}</option>
+                          ))}
+                          <option value="NEW" style={{ fontWeight: 'bold', color: '#2563eb' }}>+ Asignar nuevo tipo</option>
+                        </>
+                      )}
+                    </select>
+
+                    {isNewType && (
+                      <input
+                        type="text"
+                        name="newTypeName"
+                        value={formData.newTypeName}
+                        onChange={handleInputChange}
+                        placeholder="Nombre del nuevo tipo"
+                        required
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        autoFocus
+                      />
+                    )}
+                  </div>
                 </div>
 
                 <div>
