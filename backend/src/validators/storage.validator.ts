@@ -5,7 +5,7 @@ export const storageTypeSchema = z.object({
 });
 
 export const storageUnitSchema = z.object({
-  number: z.string().min(1, "El número de trastero es requerido"),
+  number: z.string().optional(), // Se genera automáticamente
   typeId: z.number().int().positive("El ID de tipo es inválido"),
   price: z.number().positive("El precio debe ser un número positivo"),
   m2: z.number().positive("Los metros cuadrados deben ser positivos"),

@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/authContext';
 
-type ProtectedRouteProps = {
+type AdminProtectedRouteProps = {
   children: ReactNode;
 };
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isBootstrapping } = useAuth();
+const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
+  const { isAuthenticated, isBootstrapping, user } = useAuth();
 
   // Si no requiere autenticación, permitir acceso directo
   const requireAuth = import.meta.env.VITE_REQUIRE_AUTH;
@@ -23,7 +23,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
-export default ProtectedRoute;
+export default AdminProtectedRoute;

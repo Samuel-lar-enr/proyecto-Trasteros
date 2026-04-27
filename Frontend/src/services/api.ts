@@ -14,6 +14,7 @@ import type {
   Contract,
   Invoice,
   CreateContractRequest,
+  CreateStorageUnitRequest,
   BatchGenerateInvoicesRequest,
   IpcBatch,
   ApplyIpcRequest,
@@ -137,6 +138,10 @@ export const authService = {
 export const storageService = {
   getAll: async (filters?: any): Promise<{ storageUnits: StorageUnit[] }> => {
     const res = await api.get('/storage/units', { params: filters });
+    return res.data;
+  },
+  create: async (data: CreateStorageUnitRequest): Promise<{ message: string, storageUnit: StorageUnit }> => {
+    const res = await api.post('/storage/units', data);
     return res.data;
   },
   getOne: async (id: number): Promise<{ storageUnit: StorageUnit }> => {

@@ -1,25 +1,70 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrasteros } from '../contexts/TrasterosContext';
+import { useAuth } from '../contexts/authContext';
 import type { StorageUnit } from '../types/apiTypes';
 import NavBar from '../components/NavBar';
 
 const TrasterosList = () => {
   const navigate = useNavigate();
   const { trasteros, loading, error } = useTrasteros();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [sortColumn, setSortColumn] = useState<keyof StorageUnit>('number');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [ShowFreeOnly, setShowFreeOnly] = useState(false);
+  const [showFreeOnly, setShowFreeOnly] = useState(true);
+
+  const availableFilters = [
+    { key: 'number', label: 'Número' },
+    { key: 'location', label: 'Ubicación' },
+    { key: 'price', label: 'Precio' },
+    { key: 'm2', label: 'M2' },
+    { key: 'm3', label: 'M3' }
+  ];
+
+  const toggleFilter = (filterKey: string) => {
+    setSelectedFilters(prev => 
+      prev.includes(filterKey) 
+        ? prev.filter(f => f !== filterKey)
+        : [...prev, filterKey]
+    );
+  };
 
   const filteredAndSortedTrasteros = useMemo(() => {
-    let filtered = trasteros.filter(t =>
-      t.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.price.toString().includes(searchTerm.toLowerCase())
-    );
+    let filtered = trasteros.filter(t => {
+      // Si no hay filtros seleccionados, buscar en todos los campos
+      if (selectedFilters.length === 0) {
+        return (
+          t.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.price.toString().includes(searchTerm.toLowerCase()) ||
+          t.m2.toString().includes(searchTerm.toLowerCase()) ||
+          t.m3.toString().includes(searchTerm.toLowerCase())
+        );
+      }
 
-    if (ShowFreeOnly) {
+      // Si hay filtros seleccionados, buscar solo en esos campos
+      return selectedFilters.some(filterKey => {
+        switch (filterKey) {
+          case 'number':
+            return t.number.toLowerCase().includes(searchTerm.toLowerCase());
+          case 'location':
+            return t.location.toLowerCase().includes(searchTerm.toLowerCase());
+          case 'price':
+            return t.price.toString().includes(searchTerm.toLowerCase());
+          case 'm2':
+            return t.m2.toString().includes(searchTerm.toLowerCase());
+          case 'm3':
+            return t.m3.toString().includes(searchTerm.toLowerCase());
+          default:
+            return false;
+        }
+      });
+    });
+
+    // Mostrar solo disponibles por defecto
+    if (showFreeOnly) {
       filtered = filtered.filter(t => t.status === 'FREE');
     }
 
@@ -35,7 +80,7 @@ const TrasterosList = () => {
     });
 
     return filtered;
-  }, [trasteros, searchTerm, sortColumn, sortDirection, ShowFreeOnly]);
+  }, [trasteros, searchTerm, selectedFilters, sortColumn, sortDirection, showFreeOnly]);
 
   const handleSort = (column: keyof StorageUnit) => {
     if (sortColumn === column) {
@@ -60,53 +105,79 @@ const TrasterosList = () => {
     }
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedFilters([]);
+    setShowFreeOnly(true);
+    setSortColumn('number');
+    setSortDirection('asc');
+  };
 
   return (
     <div>
       <NavBar />
       <div className="container">
-        <h1>Trasteros</h1>
+        <h1>Trasteros Disponibles</h1>
         {loading && <p>Cargando trasteros...</p>}
         {error && <p className="error-text">{error}</p>}
         {!loading && !error && (
           <>
-            <input
-              type="text"
-              placeholder="Buscar por Número, Ubicación o Precio"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+            <div className="search-section">
+              <div className="search-container">
+                <div className="filter-dropdown">
+                  <button 
+                    className="filter-btn"
+                    onClick={() => setSelectedFilters(selectedFilters.length === 0 ? availableFilters.map(f => f.key) : [])}
+                  >
+                    Filtros {selectedFilters.length > 0 && `(${selectedFilters.length})`}
+                  </button>
+                  <div className="filter-options">
+                    {availableFilters.map(filter => (
+                      <label key={filter.key} className="filter-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedFilters.includes(filter.key)}
+                          onChange={() => toggleFilter(filter.key)}
+                        />
+                        <span>{filter.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+            </div>
 
             <div className="toolbar" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
               <div className="filter-container" style={{ marginBottom: 0 }}>
                 <input
                   id="showFreeOnly"
                   type="checkbox"
-                  checked={ShowFreeOnly}
+                  checked={showFreeOnly}
                   onChange={(e) => setShowFreeOnly(e.target.checked)}
-                  className={`filter-checkbox ${ShowFreeOnly ? 'border-green-500' : ''}`}
+                  className={`filter-checkbox ${showFreeOnly ? 'border-green-500' : ''}`}
                 />
                 <label 
                   htmlFor="showFreeOnly" 
-                  className={`filter-label ${ShowFreeOnly ? 'active' : ''}`}
+                  className={`filter-label ${showFreeOnly ? 'active' : ''}`}
                 >
                   Mostrar solo trasteros libres
                 </label>
               </div>
 
-              {(searchTerm || ShowFreeOnly || sortColumn !== 'number' || sortDirection !== 'asc') && (
+              {(searchTerm || selectedFilters.length > 0 || !showFreeOnly || sortColumn !== 'number' || sortDirection !== 'asc') && (
                 <button 
                   className="reset-btn"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setShowFreeOnly(false);
-                    setSortColumn('number');
-                    setSortDirection('asc');
-                  }}
+                  onClick={resetFilters}
                 >
                   <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>×</span>
-                  Limpiar filtros y orden
+                  Limpiar filtros
                 </button>
               )}
             </div>
@@ -121,6 +192,7 @@ const TrasterosList = () => {
                     <th onClick={() => handleSort('location')}>Ubicación {sortColumn === 'location' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th onClick={() => handleSort('price')}>Precio {sortColumn === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th onClick={() => handleSort('status')}>Estado {sortColumn === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                    {user?.role === 'ADMIN' && <th>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -136,6 +208,17 @@ const TrasterosList = () => {
                           {t.status}
                         </span>
                       </td>
+                      {user?.role === 'ADMIN' && (
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="edit-btn"
+                            onClick={() => navigate(`/trasteros/${t.id}/edit`)}
+                            title="Editar trastero"
+                          >
+                            ✏️
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -146,6 +229,47 @@ const TrasterosList = () => {
           </>
         )}
       </div>
+
+      <style>{`
+        .search-section {
+          margin-bottom: 2rem;
+        }
+
+        .search-inputs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+          .search-inputs {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .search-input {
+          padding: 0.75rem;
+          border: 2px solid #e0e0e0;
+          border-radius: 6px;
+          font-size: 1rem;
+          transition: border-color 0.3s;
+        }
+
+        .edit-btn {
+          background: #4f46e5;
+          color: white;
+          border: none;
+          padding: 0.5rem;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background-color 0.2s;
+        }
+
+        .edit-btn:hover {
+          background: #3730a3;
+        }
+      `}</style>
     </div>
   );
 };

@@ -31,16 +31,37 @@ export async function listStorageTypes(_req: Request, res: Response, next: NextF
 
 export async function createStorageUnit(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = storageUnitSchema.parse(req.body);
+    // Generar código automáticamente
+    const lastUnit = await prisma.storageUnit.findFirst({
+      orderBy: { id: 'desc' },
+    });
 
+    let nextNumber = 1;
+    if (lastUnit) {
+      // Extraer el número del último código (formato T-XXX)
+      const match = lastUnit.number.match(/T-(\d+)/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
+
+    const generatedCode = `T-${nextNumber.toString().padStart(3, '0')}`;
+
+    // Verificar que el código generado no exista (por si acaso)
     const existingUnit = await prisma.storageUnit.findUnique({
-      where: { number: data.number },
+      where: { number: generatedCode },
     });
 
     if (existingUnit) {
-      res.status(409).json({ error: "Conflicto", message: "Ya existe un trastero con ese número" });
+      res.status(500).json({ error: "Error interno", message: "Error generando código único" });
       return;
     }
+
+    const data = storageUnitSchema.parse({
+      ...req.body,
+      number: generatedCode,
+      status: req.body.status || 'FREE' // Estado por defecto
+    });
 
     const storageUnit = await prisma.storageUnit.create({
       data: {
@@ -49,6 +70,7 @@ export async function createStorageUnit(req: Request, res: Response, next: NextF
         m2: data.m2.toString(),
         m3: data.m3.toString(),
       },
+      include: { type: true }
     });
 
     res.status(201).json({ message: "Trastero creado con éxito", storageUnit });
@@ -110,6 +132,28 @@ export async function updateStorageUnit(req: Request, res: Response, next: NextF
     const id = Number(req.params.id);
     const data = updateStorageUnitSchema.parse(req.body);
 
+    // Check if status is being changed to OCCUPIED
+    if (data.status === 'OCCUPIED') {
+      const currentUnit = await prisma.storageUnit.findUnique({
+        where: { id },
+        include: { contracts: { where: { isActive: true } } }
+      });
+
+      if (!currentUnit) {
+        res.status(404).json({ error: "No encontrado", message: "Trastero no encontrado" });
+        return;
+      }
+
+      // Check if there's an active contract
+      if (currentUnit.contracts.length === 0) {
+        res.status(400).json({
+          error: "Validación fallida",
+          message: "No se puede cambiar el estado a 'Ocupado' sin un contrato activo"
+        });
+        return;
+      }
+    }
+
     const updateData: any = { ...data };
     if (data.price !== undefined) updateData.price = data.price.toString();
     if (data.m2 !== undefined) updateData.m2 = data.m2.toString();
@@ -118,6 +162,7 @@ export async function updateStorageUnit(req: Request, res: Response, next: NextF
     const updatedUnit = await prisma.storageUnit.update({
       where: { id },
       data: updateData,
+      include: { type: true }
     });
 
     res.status(200).json({ message: "Trastero actualizado", storageUnit: updatedUnit });

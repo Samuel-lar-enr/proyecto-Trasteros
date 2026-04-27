@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StorageUnit } from '../types/apiTypes';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import type { StorageUnit } from '../types/apiTypes';
 import { storageService } from '../services/api';
 
 interface TrasterosContextType {

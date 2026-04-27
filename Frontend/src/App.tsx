@@ -5,14 +5,17 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ActivationPage from './pages/ActivationPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminDashboard from './pages/AdminDashboard';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import MarketingPolicyPage from './pages/MarketingPolicyPage';
 import TrasterosList from './pages/TrasterosList';
 import TrasteroDetail from './pages/TrasteroDetail';
-import MainPageExample from './pages/MainPageExample';
+import CreateTrastero from './pages/CreateTrastero';
+import EditTrastero from './pages/EditTrastero';
 
 const App = () => {
   return (
@@ -31,11 +34,11 @@ const App = () => {
             }
           />
           <Route
-            path="/main-example"
+            path="/admin-dashboard"
             element={
-              <ProtectedRoute>
-                <MainPageExample />
-              </ProtectedRoute>
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
             }
           />
           <Route
@@ -44,6 +47,22 @@ const App = () => {
               <ProtectedRoute>
                 <TrasterosList />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trasteros/create"
+            element={
+              <AdminProtectedRoute>
+                <CreateTrastero />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/trasteros/:id/edit"
+            element={
+              <AdminProtectedRoute>
+                <EditTrastero />
+              </AdminProtectedRoute>
             }
           />
           <Route
@@ -59,8 +78,8 @@ const App = () => {
           <Route path="/marketing-policy" element={<MarketingPolicyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-          <Route path="/" element={<Navigate to="/main-example" replace />} />
-          <Route path="*" element={<Navigate to="/main-example" replace />} />
+          <Route path="/" element={<Navigate to="/trasteros" replace />} />
+          <Route path="*" element={<Navigate to="/trasteros" replace />} />
         </Routes>
         </BrowserRouter>
       </TrasterosProvider>

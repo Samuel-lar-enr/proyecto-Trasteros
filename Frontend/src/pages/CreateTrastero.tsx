@@ -1,0 +1,225 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { storageService } from '../services/api';
+import type { CreateStorageUnitRequest } from '../types/apiTypes';
+
+const CreateTrastero = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    typeId: 1,
+    price: '',
+    m2: '',
+    m3: '',
+    location: '',
+    status: 'FREE',
+    observations: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data: CreateStorageUnitRequest = {
+        typeId: parseInt(formData.typeId.toString()),
+        price: parseFloat(formData.price),
+        m2: parseFloat(formData.m2),
+        m3: parseFloat(formData.m3),
+        location: formData.location,
+        status: formData.status as 'FREE' | 'OCCUPIED' | 'RESERVED' | 'NOT_AVAILABLE',
+        observations: formData.observations || undefined
+      };
+
+      await storageService.create(data);
+      navigate('/trasteros');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al crear el trastero');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="create-trastero-page">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">Crear Nuevo Trastero</h1>
+              <button
+                onClick={() => navigate('/trasteros')}
+                className="text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md border border-gray-300 hover:border-gray-400 transition-colors"
+              >
+                ← Volver
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="typeId" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Trastero *
+                  </label>
+                  <select
+                    id="typeId"
+                    name="typeId"
+                    value={formData.typeId}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value={1}>Estándar</option>
+                    <option value={2}>Premium</option>
+                    <option value={3}>Grande</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                    Estado Inicial *
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="FREE">Libre</option>
+                    <option value="OCCUPIED">Ocupado</option>
+                    <option value="RESERVED">Reservado</option>
+                    <option value="NOT_AVAILABLE">No Disponible</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Precio (€/mes) *
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                    Ubicación *
+                  </label>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ej: Planta baja, Sector A"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="m2" className="block text-sm font-medium text-gray-700 mb-2">
+                    Metros Cuadrados (m²) *
+                  </label>
+                  <input
+                    type="number"
+                    id="m2"
+                    name="m2"
+                    value={formData.m2}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="m3" className="block text-sm font-medium text-gray-700 mb-2">
+                    Metros Cúbicos (m³) *
+                  </label>
+                  <input
+                    type="number"
+                    id="m3"
+                    name="m3"
+                    value={formData.m3}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="observations" className="block text-sm font-medium text-gray-700 mb-2">
+                  Observaciones
+                </label>
+                <textarea
+                  id="observations"
+                  name="observations"
+                  value={formData.observations}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Observaciones adicionales sobre el trastero..."
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => navigate('/trasteros')}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Creando...' : 'Crear Trastero'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+};
+
+export default CreateTrastero;

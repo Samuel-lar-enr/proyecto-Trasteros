@@ -13,6 +13,7 @@
     "@react-oauth/google": "^0.13.4",
     "@tailwindcss/vite": "^4.2.0",
     "axios": "^1.13.6",
+    "proyecto-trasteros-root": "file:..",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-google-recaptcha": "^3.1.0",
@@ -23,7 +24,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/react-google-recaptcha": "^2.1.9",
     "@vitejs/plugin-react-swc": "^4.2.2",

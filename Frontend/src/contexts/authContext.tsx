@@ -30,6 +30,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   const hydrateUser = useCallback(async () => {
+    // Si la variable de entorno indica que no requiere autenticación
+    const requireAuth = import.meta.env.VITE_REQUIRE_AUTH;
+    
+    if (requireAuth === 'false') {
+      // En modo sin auth, marcar como autenticado con usuario dummy
+      setUser({
+        id: 1,
+        email: 'dev@example.com',
+        name: 'Usuario Desarrollo',
+        userType: 'PARTICULAR',
+        role: 'ADMIN',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      setIsBootstrapping(false);
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);

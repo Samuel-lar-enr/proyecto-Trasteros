@@ -241,6 +241,16 @@ export interface CreateContractRequest {
 /**
  * STORAGE UNIT REQUESTS
  */
+export interface CreateStorageUnitRequest {
+  typeId: number;
+  price: number;
+  m2: number;
+  m3: number;
+  location: string;
+  status?: StorageStatus;
+  observations?: string;
+}
+
 export interface UpdateStorageUnitRequest {
   number?: string;
   typeId?: number;
