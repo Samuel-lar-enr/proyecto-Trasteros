@@ -20,7 +20,8 @@ import type {
   BatchGenerateInvoicesRequest,
   IpcBatch,
   ApplyIpcRequest,
-  UpdateStorageUnitRequest
+  UpdateStorageUnitRequest,
+  AssignClientRequest
 } from '../types/apiTypes';
 
 /**
@@ -83,6 +84,14 @@ export const authService = {
    */
   getMe: async (): Promise<MeResponse> => {
     const res = await api.get<MeResponse>('/auth/me');
+    return res.data;
+  },
+
+  /**
+   * Obtener lista de todos los usuarios
+   */
+  getUsers: async (): Promise<User[]> => {
+    const res = await api.get<User[]>('/auth/users');
     return res.data;
   },
 
@@ -178,6 +187,10 @@ export const contractService = {
   },
   create: async (data: CreateContractRequest): Promise<{ message: string, contract: Contract }> => {
     const res = await api.post('/contracts', data);
+    return res.data;
+  },
+  assignClient: async (data: AssignClientRequest): Promise<{ message: string, contract: Contract }> => {
+    const res = await api.post('/contracts/assign', data);
     return res.data;
   },
   terminate: async (id: number): Promise<{ message: string }> => {

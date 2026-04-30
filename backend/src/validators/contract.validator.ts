@@ -10,6 +10,15 @@ export const createContractSchema = z.object({
   currentPrice: z.number().positive("El precio actual debe ser positivo"),
 });
 
+export const assignClientSchema = z.object({
+  storageUnitId: z.number().int().positive("ID de trastero inválido"),
+  clientName: z.string().min(1, "El nombre del cliente es requerido"),
+  dniNif: z.string().min(1, "El DNI/NIF es requerido"),
+  startDate: z.string().datetime("La fecha de inicio debe ser una fecha válida (ISO)"),
+  content: z.string().optional(),
+  insuranceCoverage: z.number().nonnegative("La cobertura debe ser un número positivo").optional(),
+});
+
 export const updateContractSchema = z.object({
   endDate: z.string().datetime("La fecha de fin debe ser una fecha válida (ISO)").optional(),
   content: z.string().optional(),

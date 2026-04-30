@@ -1,10 +1,90 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { createContractSchema, updateContractSchema } from "../validators/contract.validator.js";
+import { createContractSchema, updateContractSchema, assignClientSchema } from "../validators/contract.validator.js";
 
 /**
  * CONTRACTS CONTROLLERS
  */
+
+export async function assignClient(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = assignClientSchema.parse(req.body);
+
+    // 1. Check if the unit exists and is FREE
+    const storageUnit = await prisma.storageUnit.findUnique({
+      where: { id: data.storageUnitId },
+    });
+
+    if (!storageUnit) {
+      res.status(404).json({ error: "No encontrado", message: "Trastero no encontrado" });
+      return;
+    }
+
+    if (storageUnit.status !== 'FREE') {
+      res.status(400).json({ error: "Error", message: "El trastero no está libre para ser asignado" });
+      return;
+    }
+
+    // Business Rule: Start date cannot be future
+    const startDate = new Date(data.startDate);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Permitir cualquier hora del día de hoy
+
+    if (startDate > today) {
+      res.status(400).json({ 
+        error: "Validación fallida", 
+        message: "La fecha de inicio no puede ser posterior a la fecha actual." 
+      });
+      return;
+    }
+
+    // 2. Find the user by DNI/NIF
+    const user = await prisma.user.findUnique({
+      where: { dniNif: data.dniNif },
+    });
+
+    if (!user) {
+      res.status(404).json({ 
+        error: "Cliente no encontrado", 
+        message: `No existe ningún cliente registrado con el DNI/NIF: ${data.dniNif}. El cliente debe estar registrado previamente.` 
+      });
+      return;
+    }
+
+    // 3. Create the contract and Update the unit status in a single transaction
+    const [contract] = await prisma.$transaction([
+      prisma.contract.create({
+        data: {
+          userId: user.id,
+          storageUnitId: data.storageUnitId,
+          startDate: new Date(data.startDate),
+          content: data.content,
+          insuranceCoverage: data.insuranceCoverage?.toString() || null,
+          currentPrice: storageUnit.price.toString(),
+          isActive: true,
+        },
+      }),
+      prisma.storageUnit.update({
+        where: { id: data.storageUnitId },
+        data: { status: 'OCCUPIED' },
+      }),
+    ]);
+
+    res.status(201).json({ 
+      message: "Cliente asignado y contrato creado con éxito", 
+      contract: {
+        ...contract,
+        user: {
+          id: user.id,
+          name: user.name,
+          dniNif: user.dniNif
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function createContract(req: Request, res: Response, next: NextFunction) {
   try {

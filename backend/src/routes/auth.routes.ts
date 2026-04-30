@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getMe, manualRegister, googleLogin, updateProfile, activateAccount, forgotPassword, resetPassword, resendActivation } from '../controllers/auth.controller.js';
+import { register, login, getMe, manualRegister, googleLogin, updateProfile, activateAccount, forgotPassword, resetPassword, resendActivation, getUsers } from '../controllers/auth.controller.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.middleware.js';
 
 /**
@@ -8,6 +8,9 @@ import { requireAuth, requireAdmin } from '../middleware/auth.middleware.js';
  */
 
 const router = Router();
+
+// GET /api/auth/users - Listar usuarios (solo admin)
+router.get('/users', requireAdmin, getUsers);
 
 // POST /api/auth/register - Registrar nuevo usuario
 router.post('/register', register);

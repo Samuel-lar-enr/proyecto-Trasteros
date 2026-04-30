@@ -132,26 +132,40 @@ export async function updateStorageUnit(req: Request, res: Response, next: NextF
     const id = Number(req.params.id);
     const data = updateStorageUnitSchema.parse(req.body);
 
-    // Check if status is being changed to OCCUPIED
-    if (data.status === 'OCCUPIED') {
-      const currentUnit = await prisma.storageUnit.findUnique({
-        where: { id },
-        include: { contracts: { where: { isActive: true } } }
+    // Get current state to handle status transitions
+    const currentUnit = await prisma.storageUnit.findUnique({
+      where: { id },
+      include: { 
+        contracts: { 
+          where: { isActive: true } 
+        } 
+      }
+    });
+
+    if (!currentUnit) {
+      res.status(404).json({ error: "No encontrado", message: "Trastero no encontrado" });
+      return;
+    }
+
+    // TRANSITION: To OCCUPIED
+    if (data.status === 'OCCUPIED' && currentUnit.contracts.length === 0) {
+      res.status(400).json({
+        error: "Validación fallida",
+        message: "No se puede cambiar el estado a 'Ocupado' sin un contrato activo"
       });
+      return;
+    }
 
-      if (!currentUnit) {
-        res.status(404).json({ error: "No encontrado", message: "Trastero no encontrado" });
-        return;
-      }
-
-      // Check if there's an active contract
-      if (currentUnit.contracts.length === 0) {
-        res.status(400).json({
-          error: "Validación fallida",
-          message: "No se puede cambiar el estado a 'Ocupado' sin un contrato activo"
-        });
-        return;
-      }
+    // TRANSITION: From OCCUPIED to FREE/RESERVED/NOT_AVAILABLE
+    // If freeing the unit, terminate active contracts
+    if (currentUnit.status === 'OCCUPIED' && data.status !== 'OCCUPIED' && data.status !== undefined) {
+      await prisma.contract.updateMany({
+        where: { storageUnitId: id, isActive: true },
+        data: { 
+          isActive: false,
+          endDate: new Date()
+        }
+      });
     }
 
     const updateData: any = { ...data };

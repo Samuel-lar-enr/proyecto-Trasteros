@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { storageService } from '../services/api';
+import { storageService, contractService, authService } from '../services/api';
 import { useTrasteros } from '../contexts/TrasterosContext';
-import type { StorageUnit, UpdateStorageUnitRequest } from '../types/apiTypes';
+import type { StorageUnit, UpdateStorageUnitRequest, AssignClientRequest, User } from '../types/apiTypes';
 
 const EditTrastero: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +13,12 @@ const EditTrastero: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [trastero, setTrastero] = useState<StorageUnit | null>(null);
   const [isNewType, setIsNewType] = useState(false);
+
+  // Client search state
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     typeId: '',
@@ -25,34 +31,63 @@ const EditTrastero: React.FC = () => {
     observations: ''
   });
 
+  const [assignData, setAssignData] = useState({
+    clientName: '',
+    dniNif: '',
+    startDate: new Date().toISOString().split('T')[0],
+    content: '',
+    insuranceCoverage: ''
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const [showAssignSection, setShowAssignSection] = useState(false);
+
   useEffect(() => {
-    const fetchTrastero = async () => {
+    const fetchData = async () => {
       if (!id) return;
 
       try {
-        const response = await storageService.getOne(parseInt(id));
-        setTrastero(response.storageUnit);
+        const [trasteroRes, usersRes] = await Promise.all([
+          storageService.getOne(parseInt(id)),
+          authService.getUsers()
+        ]);
+
+        setTrastero(trasteroRes.storageUnit);
+        // Filtrar solo usuarios que tengan DNI/NIF para la asignación
+        const validUsers = (usersRes || []).filter((u: any) => u.dniNif);
+        setUsers(validUsers);
 
         // Populate form with existing data
         setFormData({
-          typeId: response.storageUnit.typeId.toString(),
+          typeId: trasteroRes.storageUnit.typeId.toString(),
           newTypeName: '',
-          price: response.storageUnit.price.toString(),
-          m2: response.storageUnit.m2.toString(),
-          m3: response.storageUnit.m3.toString(),
-          location: response.storageUnit.location,
-          status: response.storageUnit.status,
-          observations: response.storageUnit.observations || ''
+          price: trasteroRes.storageUnit.price.toString(),
+          m2: trasteroRes.storageUnit.m2.toString(),
+          m3: trasteroRes.storageUnit.m3.toString(),
+          location: trasteroRes.storageUnit.location,
+          status: trasteroRes.storageUnit.status,
+          observations: trasteroRes.storageUnit.observations || ''
         });
       } catch (err: any) {
-        setError('Error al cargar el trastero');
+        setError('Error al cargar datos');
       } finally {
         setFetchLoading(false);
       }
     };
 
-    fetchTrastero();
+    fetchData();
   }, [id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,10 +100,44 @@ const EditTrastero: React.FC = () => {
       }
     }
 
+    if (name === 'status') {
+      setShowAssignSection(
+        value === 'OCCUPIED' && trastero?.status === 'FREE' ? true : false
+      );
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAssignChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'clientName') {
+      const filtered = users.filter(u => 
+        u.name.toLowerCase().includes(value.toLowerCase()) || 
+        (u.surname && u.surname.toLowerCase().includes(value.toLowerCase())) ||
+        (u.dniNif && u.dniNif.toLowerCase().includes(value.toLowerCase()))
+      );
+      setFilteredUsers(filtered);
+      setShowUserDropdown(true);
+    }
+
+    setAssignData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const selectUser = (user: User) => {
+    setAssignData(prev => ({
+      ...prev,
+      clientName: `${user.name} ${user.surname || ''}`.trim(),
+      dniNif: user.dniNif || ''
+    }));
+    setShowUserDropdown(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,15 +148,19 @@ const EditTrastero: React.FC = () => {
     setError(null);
 
     try {
-      // Check if status is changing to OCCUPIED without contract
-      if (formData.status === 'OCCUPIED' && trastero?.status !== 'OCCUPIED') {
-        const confirmChange = window.confirm(
-          '¿Está seguro de cambiar el estado a "Ocupado"? Esto indica que el trastero tiene un contrato activo.'
-        );
-        if (!confirmChange) {
-          setLoading(false);
-          return;
-        }
+      // Si estamos asignando un cliente
+      if (showAssignSection) {
+        const assignRequest: AssignClientRequest = {
+          storageUnitId: parseInt(id),
+          clientName: assignData.clientName,
+          dniNif: assignData.dniNif,
+          startDate: new Date(assignData.startDate).toISOString(),
+          content: assignData.content || undefined,
+          insuranceCoverage: assignData.insuranceCoverage ? parseFloat(assignData.insuranceCoverage) : undefined,
+        };
+
+        await contractService.assignClient(assignRequest);
+        // El backend ya actualiza el estado del trastero a OCCUPIED
       }
 
       // Check if status is changing FROM OCCUPIED to any other status
@@ -101,6 +174,7 @@ const EditTrastero: React.FC = () => {
         }
       }
 
+      // Actualizar datos básicos del trastero (precio, metros, etc.)
       let finalTypeId = parseInt(formData.typeId);
 
       // Si es un nuevo tipo, crearlo primero
@@ -314,6 +388,110 @@ const EditTrastero: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {showAssignSection && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-6 mt-6">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+                    <span className="mr-2">👤</span> Datos del cliente actual
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative" ref={dropdownRef}>
+                      <label htmlFor="clientName" className="block text-sm font-medium text-blue-900 mb-2">
+                        Nombre Cliente *
+                      </label>
+                      <input
+                        type="text"
+                        id="clientName"
+                        name="clientName"
+                        value={assignData.clientName}
+                        onChange={handleAssignChange}
+                        onFocus={() => {
+                          setFilteredUsers(users);
+                          setShowUserDropdown(true);
+                        }}
+                        required={showAssignSection}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Escribe para buscar o seleccionar..."
+                        autoComplete="off"
+                      />
+                      {showUserDropdown && filteredUsers.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {filteredUsers.map(user => (
+                            <div
+                              key={user.id}
+                              className="px-4 py-2 hover:bg-blue-100 cursor-pointer border-b last:border-b-0"
+                              onClick={() => selectUser(user)}
+                            >
+                              <div className="font-medium text-gray-800">{user.name} {user.surname}</div>
+                              <div className="text-xs text-gray-500">DNI: {user.dniNif} | {user.email}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="dniNif" className="block text-sm font-medium text-blue-900 mb-2">
+                        DNI/CIF/NIF *
+                      </label>
+                      <input
+                        type="text"
+                        id="dniNif"
+                        name="dniNif"
+                        value={assignData.dniNif}
+                        onChange={handleAssignChange}
+                        required={showAssignSection}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Documento de identidad"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="startDate" className="block text-sm font-medium text-blue-900 mb-2">
+                        Fecha de inicio *
+                      </label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        value={assignData.startDate}
+                        onChange={handleAssignChange}
+                        max={today}
+                        required={showAssignSection}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="insuranceCoverage" className="block text-sm font-medium text-blue-900 mb-2">
+                        Cobertura de seguro (€)
+                      </label>
+                      <input
+                        type="number"
+                        id="insuranceCoverage"
+                        name="insuranceCoverage"
+                        value={assignData.insuranceCoverage}
+                        onChange={handleAssignChange}
+                        min="0"
+                        step="0.01"
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label htmlFor="content" className="block text-sm font-medium text-blue-900 mb-2">
+                        Contenido declarado
+                      </label>
+                      <textarea
+                        id="content"
+                        name="content"
+                        value={assignData.content}
+                        onChange={handleAssignChange}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Descripción del contenido del trastero..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="observations" className="block text-sm font-medium text-gray-700 mb-2">

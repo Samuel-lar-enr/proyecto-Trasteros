@@ -189,6 +189,15 @@ export interface UpdateProfileRequest {
   observations?: string;
 }
 
+export interface AssignClientRequest {
+  storageUnitId: number;
+  clientName: string;
+  dniNif: string;
+  startDate: string;
+  content?: string;
+  insuranceCoverage?: number;
+}
+
 export interface ManualRegisterRequest extends UpdateProfileRequest {
   email: string;
   password: string;

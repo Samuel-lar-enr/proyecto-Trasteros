@@ -5,7 +5,8 @@ import {
   getContract, 
   updateContract, 
   terminateContract, 
-  deleteContract 
+  deleteContract,
+  assignClient
 } from "../controllers/contract.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 
@@ -19,6 +20,7 @@ const router = Router();
 // Rutas de Contratos
 router.get("/", requireAdmin, listContracts);
 router.post("/", requireAdmin, createContract);
+router.post("/assign", requireAdmin, assignClient);
 router.get("/:id", requireAuth, getContract);
 router.patch("/:id", requireAdmin, updateContract);
 router.post("/:id/terminate", requireAdmin, terminateContract);

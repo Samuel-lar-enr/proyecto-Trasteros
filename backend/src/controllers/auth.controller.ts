@@ -277,8 +277,37 @@ export async function login(
 }
 
 /**
+ * GET /api/auth/users
+ * Obtiene la lista de todos los usuarios (solo administradores)
+ */
+export async function getUsers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        surname: true,
+        dniNif: true,
+        email: true,
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * GET /api/auth/me
- * Obtiene la información del usuario autenticado
+ * Obtiene información del usuario autenticado
  * Requiere token JWT válido
  */
 export async function getMe(
