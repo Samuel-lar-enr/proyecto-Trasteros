@@ -6,7 +6,7 @@ import type { CreateStorageUnitRequest } from '../types/apiTypes';
 
 const CreateTrastero = () => {
   const navigate = useNavigate();
-  const { types, loadingTypes, refreshTypes } = useTrasteros();
+  const { types, loadingTypes, refreshTypes, refreshTrasteros } = useTrasteros();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isNewType, setIsNewType] = useState(false);
@@ -74,6 +74,7 @@ const CreateTrastero = () => {
       };
 
       await storageService.create(data);
+      await refreshTrasteros();
       navigate('/trasteros');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al crear el trastero');

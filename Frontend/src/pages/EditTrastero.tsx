@@ -7,7 +7,7 @@ import type { StorageUnit, UpdateStorageUnitRequest, AssignClientRequest, User }
 const EditTrastero: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { types, loadingTypes, refreshTypes } = useTrasteros();
+  const { types, loadingTypes, refreshTypes, refreshTrasteros } = useTrasteros();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -198,6 +198,7 @@ const EditTrastero: React.FC = () => {
       };
 
       await storageService.update(parseInt(id), data);
+      await refreshTrasteros();
       navigate('/trasteros');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al actualizar el trastero');
