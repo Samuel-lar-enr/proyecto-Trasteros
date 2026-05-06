@@ -2,18 +2,19 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrasteros } from '../contexts/TrasterosContext';
 import { useAuth } from '../contexts/authContext';
+import { contractService } from '../services/api';
 import type { StorageUnit } from '../types/apiTypes';
 import NavBar from '../components/NavBar';
 
 const TrasterosList = () => {
   const navigate = useNavigate();
-  const { trasteros, loading, error } = useTrasteros();
+  const { trasteros, loading, error, refreshTrasteros } = useTrasteros();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [sortColumn, setSortColumn] = useState<keyof StorageUnit>('number');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [showFreeOnly, setShowFreeOnly] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string | 'ALL'>('FREE');
 
   const availableFilters = [
     { key: 'number', label: 'Número' },
@@ -63,9 +64,9 @@ const TrasterosList = () => {
       });
     });
 
-    // Mostrar solo disponibles por defecto
-    if (showFreeOnly) {
-      filtered = filtered.filter(t => t.status === 'FREE');
+    // Filtrar por estado si no es "ALL"
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(t => t.status === statusFilter);
     }
 
     filtered.sort((a, b) => {
@@ -80,7 +81,7 @@ const TrasterosList = () => {
     });
 
     return filtered;
-  }, [trasteros, searchTerm, selectedFilters, sortColumn, sortDirection, showFreeOnly]);
+  }, [trasteros, searchTerm, selectedFilters, sortColumn, sortDirection, statusFilter]);
 
   const handleSort = (column: keyof StorageUnit) => {
     if (sortColumn === column) {
@@ -108,9 +109,21 @@ const TrasterosList = () => {
   const resetFilters = () => {
     setSearchTerm('');
     setSelectedFilters([]);
-    setShowFreeOnly(true);
+    setStatusFilter('FREE');
     setSortColumn('number');
     setSortDirection('asc');
+  };
+  
+  const handleTerminateContract = async (contractId: number, trasteroNumber: string) => {
+    const confirm = window.confirm(`¿Estás seguro de que deseas terminar el contrato del trastero ${trasteroNumber}? El trastero volverá a estar LIBRE.`);
+    if (confirm) {
+      try {
+        await contractService.terminate(contractId);
+        await refreshTrasteros();
+      } catch (err: any) {
+        alert(err.response?.data?.message || 'Error al terminar el contrato');
+      }
+    }
   };
 
   return (
@@ -155,23 +168,25 @@ const TrasterosList = () => {
             </div>
 
             <div className="toolbar" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-              <div className="filter-container" style={{ marginBottom: 0 }}>
-                <input
-                  id="showFreeOnly"
-                  type="checkbox"
-                  checked={showFreeOnly}
-                  onChange={(e) => setShowFreeOnly(e.target.checked)}
-                  className={`filter-checkbox ${showFreeOnly ? 'border-green-500' : ''}`}
-                />
-                <label 
-                  htmlFor="showFreeOnly" 
-                  className={`filter-label ${showFreeOnly ? 'active' : ''}`}
-                >
-                  Mostrar solo trasteros libres
+              <div className="filter-container" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label htmlFor="statusFilter" className="filter-label" style={{ fontWeight: '600', color: '#374151' }}>
+                  Mostrar:
                 </label>
+                <select
+                  id="statusFilter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="ALL">Todos los trasteros</option>
+                  <option value="FREE">Solo libres</option>
+                  <option value="OCCUPIED">Solo ocupados</option>
+                  <option value="RESERVED">Solo reservados</option>
+                  <option value="NOT_AVAILABLE">No disponibles</option>
+                </select>
               </div>
 
-              {(searchTerm || selectedFilters.length > 0 || !showFreeOnly || sortColumn !== 'number' || sortDirection !== 'asc') && (
+              {(searchTerm || selectedFilters.length > 0 || statusFilter !== 'ALL' || sortColumn !== 'number' || sortDirection !== 'asc') && (
                 <button 
                   className="reset-btn"
                   onClick={resetFilters}
@@ -217,6 +232,15 @@ const TrasterosList = () => {
                           >
                             ✏️
                           </button>
+                          {t.status === 'OCCUPIED' && t.contracts && t.contracts.length > 0 && (
+                            <button
+                              className="terminate-btn"
+                              onClick={() => handleTerminateContract(t.contracts![0].id, t.number)}
+                              title="Terminar contrato"
+                            >
+                              🛑
+                            </button>
+                          )}
                         </td>
                       )}
                     </tr>

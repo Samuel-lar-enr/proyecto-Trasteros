@@ -194,7 +194,7 @@ export const contractService = {
     return res.data;
   },
   terminate: async (id: number): Promise<{ message: string }> => {
-    const res = await api.put(`/contracts/${id}/terminate`);
+    const res = await api.post(`/contracts/${id}/terminate`);
     return res.data;
   }
 };

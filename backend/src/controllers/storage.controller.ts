@@ -90,7 +90,13 @@ export async function listStorageUnits(req: Request, res: Response, next: NextFu
 
     const storageUnits = await prisma.storageUnit.findMany({
       where: filters,
-      include: { type: true },
+      include: { 
+        type: true,
+        contracts: {
+          where: { isActive: true },
+          take: 1
+        }
+      },
     });
 
     res.status(200).json({ storageUnits });
