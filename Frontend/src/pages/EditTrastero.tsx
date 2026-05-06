@@ -454,7 +454,7 @@ const EditTrastero: React.FC = () => {
                         name="startDate"
                         value={assignData.startDate}
                         onChange={handleAssignChange}
-                        max={today}
+                        min={today}
                         required={showAssignSection}
                         className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />

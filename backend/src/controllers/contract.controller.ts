@@ -25,15 +25,15 @@ export async function assignClient(req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    // Business Rule: Start date cannot be future
+    // Business Rule: Start date cannot be in the past
     const startDate = new Date(data.startDate);
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // Permitir cualquier hora del día de hoy
+    today.setHours(0, 0, 0, 0); // Establecer al inicio del día de hoy
 
-    if (startDate > today) {
+    if (startDate < today) {
       res.status(400).json({ 
         error: "Validación fallida", 
-        message: "La fecha de inicio no puede ser posterior a la fecha actual." 
+        message: "La fecha de inicio no puede ser anterior a la fecha actual." 
       });
       return;
     }
