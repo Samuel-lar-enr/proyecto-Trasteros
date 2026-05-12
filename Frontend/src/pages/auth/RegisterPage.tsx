@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/authContext';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import AuthLayout from '../components/AuthLayout';
-import { authService } from '../services/api';
+import { useAuth } from '../../contexts/authContext';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import AuthLayout from '../../components/AuthLayout';
+import { authService } from '../../services/api';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterPage = () => {

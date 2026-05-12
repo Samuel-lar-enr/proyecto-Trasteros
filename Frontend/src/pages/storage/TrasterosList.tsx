@@ -1,20 +1,23 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTrasteros } from '../contexts/TrasterosContext';
-import { useAuth } from '../contexts/authContext';
-import { contractService } from '../services/api';
-import type { StorageUnit } from '../types/apiTypes';
-import NavBar from '../components/NavBar';
+import { useTrasteros } from '../../contexts/TrasterosContext';
+import { useAuth } from '../../contexts/authContext';
+import { contractService } from '../../services/api';
+import type { StorageUnit } from '../../types/apiTypes';
+import NavBar from '../../components/NavBar';
 
 const TrasterosList = () => {
   const navigate = useNavigate();
   const { trasteros, loading, error, refreshTrasteros } = useTrasteros();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [sortColumn, setSortColumn] = useState<keyof StorageUnit>('number');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [statusFilter, setStatusFilter] = useState<string | 'ALL'>('FREE');
+  // For normal users, we force 'FREE' status
+  const [statusFilter, setStatusFilter] = useState<string | 'ALL'>(isAdmin ? 'ALL' : 'FREE');
 
   const availableFilters = [
     { key: 'number', label: 'Número' },
@@ -34,6 +37,9 @@ const TrasterosList = () => {
 
   const filteredAndSortedTrasteros = useMemo(() => {
     let filtered = trasteros.filter(t => {
+      // Security enforcement: Normal users ONLY see FREE trasteros
+      if (!isAdmin && t.status !== 'FREE') return false;
+
       // Si no hay filtros seleccionados, buscar en todos los campos
       if (selectedFilters.length === 0) {
         return (
@@ -64,9 +70,10 @@ const TrasterosList = () => {
       });
     });
 
-    // Filtrar por estado si no es "ALL"
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(t => t.status === statusFilter);
+    // Filtrar por estado si no es "ALL" (Admin only, normal users forced to FREE)
+    const effectiveStatus = isAdmin ? statusFilter : 'FREE';
+    if (effectiveStatus !== 'ALL') {
+      filtered = filtered.filter(t => t.status === effectiveStatus);
     }
 
     filtered.sort((a, b) => {
@@ -81,7 +88,7 @@ const TrasterosList = () => {
     });
 
     return filtered;
-  }, [trasteros, searchTerm, selectedFilters, sortColumn, sortDirection, statusFilter]);
+  }, [trasteros, searchTerm, selectedFilters, sortColumn, sortDirection, statusFilter, isAdmin]);
 
   const handleSort = (column: keyof StorageUnit) => {
     if (sortColumn === column) {
@@ -109,7 +116,7 @@ const TrasterosList = () => {
   const resetFilters = () => {
     setSearchTerm('');
     setSelectedFilters([]);
-    setStatusFilter('FREE');
+    setStatusFilter(isAdmin ? 'ALL' : 'FREE');
     setSortColumn('number');
     setSortDirection('asc');
   };
@@ -130,36 +137,38 @@ const TrasterosList = () => {
     <div>
       <NavBar />
       <div className="container">
-        <h1>Trasteros Disponibles</h1>
+        <h1>{isAdmin ? 'Gestión de Trasteros' : 'Trasteros Disponibles'}</h1>
         {loading && <p>Cargando trasteros...</p>}
         {error && <p className="error-text">{error}</p>}
         {!loading && !error && (
           <>
             <div className="search-section">
               <div className="search-container">
-                <div className="filter-dropdown">
-                  <button 
-                    className="filter-btn"
-                    onClick={() => setSelectedFilters(selectedFilters.length === 0 ? availableFilters.map(f => f.key) : [])}
-                  >
-                    Filtros {selectedFilters.length > 0 && `(${selectedFilters.length})`}
-                  </button>
-                  <div className="filter-options">
-                    {availableFilters.map(filter => (
-                      <label key={filter.key} className="filter-option">
-                        <input
-                          type="checkbox"
-                          checked={selectedFilters.includes(filter.key)}
-                          onChange={() => toggleFilter(filter.key)}
-                        />
-                        <span>{filter.label}</span>
-                      </label>
-                    ))}
+                {isAdmin && (
+                  <div className="filter-dropdown">
+                    <button 
+                      className="filter-btn"
+                      onClick={() => setSelectedFilters(selectedFilters.length === 0 ? availableFilters.map(f => f.key) : [])}
+                    >
+                      Filtros {selectedFilters.length > 0 && `(${selectedFilters.length})`}
+                    </button>
+                    <div className="filter-options">
+                      {availableFilters.map(filter => (
+                        <label key={filter.key} className="filter-option">
+                          <input
+                            type="checkbox"
+                            checked={selectedFilters.includes(filter.key)}
+                            onChange={() => toggleFilter(filter.key)}
+                          />
+                          <span>{filter.label}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder={isAdmin ? "Buscar por número, ubicación..." : "Buscar trastero libre..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -167,35 +176,37 @@ const TrasterosList = () => {
               </div>
             </div>
 
-            <div className="toolbar" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-              <div className="filter-container" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label htmlFor="statusFilter" className="filter-label" style={{ fontWeight: '600', color: '#374151' }}>
-                  Mostrar:
-                </label>
-                <select
-                  id="statusFilter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="ALL">Todos los trasteros</option>
-                  <option value="FREE">Solo libres</option>
-                  <option value="OCCUPIED">Solo ocupados</option>
-                  <option value="RESERVED">Solo reservados</option>
-                  <option value="NOT_AVAILABLE">No disponibles</option>
-                </select>
-              </div>
+            {isAdmin && (
+              <div className="toolbar" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <div className="filter-container" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label htmlFor="statusFilter" className="filter-label" style={{ fontWeight: '600', color: '#374151' }}>
+                    Mostrar:
+                  </label>
+                  <select
+                    id="statusFilter"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="ALL">Todos los trasteros</option>
+                    <option value="FREE">Solo libres</option>
+                    <option value="OCCUPIED">Solo ocupados</option>
+                    <option value="RESERVED">Solo reservados</option>
+                    <option value="NOT_AVAILABLE">No disponibles</option>
+                  </select>
+                </div>
 
-              {(searchTerm || selectedFilters.length > 0 || statusFilter !== 'ALL' || sortColumn !== 'number' || sortDirection !== 'asc') && (
-                <button 
-                  className="reset-btn"
-                  onClick={resetFilters}
-                >
-                  <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>×</span>
-                  Limpiar filtros
-                </button>
-              )}
-            </div>
+                {(searchTerm || selectedFilters.length > 0 || statusFilter !== 'ALL' || sortColumn !== 'number' || sortDirection !== 'asc') && (
+                  <button 
+                    className="reset-btn"
+                    onClick={resetFilters}
+                  >
+                    <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>×</span>
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
 
             {filteredAndSortedTrasteros.length > 0 ? (
               <table className="trasteros-table">
@@ -231,6 +242,13 @@ const TrasterosList = () => {
                             title="Editar trastero"
                           >
                             ✏️
+                          </button>
+                          <button
+                            className="billing-btn"
+                            onClick={() => navigate(`/trasteros/${t.id}/invoices`)}
+                            title="Ver facturación"
+                          >
+                            📄
                           </button>
                           {t.status === 'OCCUPIED' && t.contracts && t.contracts.length > 0 && (
                             <button

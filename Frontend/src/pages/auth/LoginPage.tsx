@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../services/api';
-import { useAuth } from '../contexts/authContext';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import AuthLayout from '../components/AuthLayout';
+import { authService } from '../../services/api';
+import { useAuth } from '../../contexts/authContext';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import AuthLayout from '../../components/AuthLayout';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 
 const LoginPage = () => {

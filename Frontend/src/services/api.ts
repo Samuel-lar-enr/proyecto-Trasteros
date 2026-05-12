@@ -214,6 +214,10 @@ export const invoiceService = {
   updateStatus: async (id: number, status: string): Promise<GenericResponse> => {
     const res = await api.put(`/invoices/${id}/status`, { status });
     return res.data;
+  },
+  delete: async (id: number): Promise<GenericResponse> => {
+    const res = await api.delete(`/invoices/${id}`);
+    return res.data;
   }
 };
 

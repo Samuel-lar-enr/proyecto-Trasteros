@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { storageService, contractService, authService } from '../services/api';
-import { useTrasteros } from '../contexts/TrasterosContext';
-import type { StorageUnit, UpdateStorageUnitRequest, AssignClientRequest, User } from '../types/apiTypes';
+import { storageService, contractService, authService } from '../../services/api';
+import { useTrasteros } from '../../contexts/TrasterosContext';
+import type { StorageUnit, UpdateStorageUnitRequest, AssignClientRequest, User } from '../../types/apiTypes';
 
 const EditTrastero: React.FC = () => {
   const navigate = useNavigate();

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { Link, useParams } from 'react-router-dom';
-import { authService } from '../services/api';
-import AuthLayout from '../components/AuthLayout';
-import Button from '../components/Button';
+import { authService } from '../../services/api';
+import AuthLayout from '../../components/AuthLayout';
+import Button from '../../components/Button';
 
 type ActivationStatus = 'loading' | 'success' | 'error';
 

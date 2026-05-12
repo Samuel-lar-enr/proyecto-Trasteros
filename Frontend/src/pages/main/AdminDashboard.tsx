@@ -1,7 +1,9 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/authContext';
-import { useTrasteros } from '../contexts/TrasterosContext';
-import NavBar from '../components/NavBar';
+import { useAuth } from '../../contexts/authContext';
+import { useTrasteros } from '../../contexts/TrasterosContext';
+import NavBar from '../../components/NavBar';
+import BatchInvoiceGenerator from '../../components/BatchInvoiceGenerator';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -67,11 +69,19 @@ const AdminDashboard = () => {
               >
                 Ver todos los Trasteros
               </button>
+              <button 
+                className="secondary-btn" 
+                onClick={() => navigate('/invoices/manage')}
+              >
+                Historial Global de Facturas
+              </button>
+            </div>
+            <div className="full-width">
+              <BatchInvoiceGenerator />
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

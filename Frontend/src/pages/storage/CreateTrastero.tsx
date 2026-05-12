@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { storageService } from '../services/api';
-import { useTrasteros } from '../contexts/TrasterosContext';
-import type { CreateStorageUnitRequest } from '../types/apiTypes';
+import { storageService } from '../../services/api';
+import { useTrasteros } from '../../contexts/TrasterosContext';
+import type { CreateStorageUnitRequest } from '../../types/apiTypes';
 
 const CreateTrastero = () => {
   const navigate = useNavigate();
