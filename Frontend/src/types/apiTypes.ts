@@ -234,6 +234,18 @@ export interface BatchGenerateInvoicesRequest {
   series?: string;
 }
 
+export interface CreateInvoiceRequest {
+  number: string;
+  series?: string;
+  userId: number;
+  storageUnitId: number;
+  taxBase: number;
+  vatAmount: number;
+  total: number;
+  status?: InvoiceStatus;
+  date?: string;
+}
+
 /**
  * CONTRACT REQUESTS
  */

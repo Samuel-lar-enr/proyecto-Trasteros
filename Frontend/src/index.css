@@ -118,6 +118,27 @@ input:focus {
 	color: #163260;
 }
 
+.warning-btn {
+	background: #f59e0b;
+	color: #ffffff;
+	margin-top: 0.75rem;
+	width: 100%;
+	border-radius: 10px;
+	padding: 0.7rem 0.9rem;
+	border: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	text-decoration: none;
+	text-align: center;
+	cursor: pointer;
+	transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.warning-btn:hover {
+	background: #d97706;
+	transform: translateY(-1px);
+}
+
 .primary-btn:hover,
 .secondary-btn:hover {
 	transform: translateY(-1px);
@@ -349,8 +370,8 @@ input:focus {
 }
 
 .edit-btn {
-  background: #4f46e5;
-  color: white;
+  background: #564ee6;
+  color: blue;
   border: none;
   padding: 0.5rem;
   border-radius: 4px;
@@ -361,6 +382,38 @@ input:focus {
 
 .edit-btn:hover {
   background: #3730a3;
+}
+
+.billing-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  margin-left: 0.5rem;
+}
+
+.billing-btn:hover {
+  background: #059669;
+}
+
+.delete-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  margin-left: 0.5rem;
+}
+
+.delete-btn:hover {
+  background: #b91c1c;
 }
 
 /* Search input */

@@ -70,7 +70,7 @@ const AdminDashboard = () => {
                 Ver todos los Trasteros
               </button>
               <button 
-                className="secondary-btn" 
+                className="primary-btn" 
                 onClick={() => navigate('/invoices/manage')}
               >
                 Historial Global de Facturas

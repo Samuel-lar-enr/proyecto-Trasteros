@@ -20,6 +20,7 @@ import EditTrastero from './pages/storage/EditTrastero';
 import StorageUnitInvoices from './pages/invoice/StorageUnitInvoices';
 import InvoiceDetail from './pages/invoice/InvoiceDetail';
 import InvoiceManagement from './pages/invoice/InvoiceManagement';
+import InvoiceForm from './pages/invoice/InvoiceForm';
 
 const App = () => {
   return (
@@ -99,6 +100,14 @@ const App = () => {
               element={
                 <AdminProtectedRoute>
                   <InvoiceManagement />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/invoices/create"
+              element={
+                <AdminProtectedRoute>
+                  <InvoiceForm />
                 </AdminProtectedRoute>
               }
             />

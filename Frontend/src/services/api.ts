@@ -21,7 +21,8 @@ import type {
   IpcBatch,
   ApplyIpcRequest,
   UpdateStorageUnitRequest,
-  AssignClientRequest
+  AssignClientRequest,
+  CreateInvoiceRequest
 } from '../types/apiTypes';
 
 /**
@@ -217,6 +218,10 @@ export const invoiceService = {
   },
   delete: async (id: number): Promise<GenericResponse> => {
     const res = await api.delete(`/invoices/${id}`);
+    return res.data;
+  },
+  create: async (data: CreateInvoiceRequest): Promise<{ message: string, invoice: Invoice }> => {
+    const res = await api.post('/invoices', data);
     return res.data;
   }
 };

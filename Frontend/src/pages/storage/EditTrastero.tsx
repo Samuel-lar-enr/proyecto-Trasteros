@@ -319,6 +319,44 @@ const EditTrastero: React.FC = () => {
                   </select>
                 </div>
 
+                {trastero?.status === 'OCCUPIED' && trastero.contracts && trastero.contracts.length > 0 && (
+                  <div className="md:col-span-2 bg-gray-50 border border-gray-200 rounded-md p-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                      <span className="mr-2">📄</span> Contrato Activo
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Cliente:</span>
+                        <div className="font-medium">{trastero.contracts[0].user?.name} {trastero.contracts[0].user?.surname}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">DNI/NIF:</span>
+                        <div className="font-medium">{trastero.contracts[0].user?.dniNif}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Fecha Inicio:</span>
+                        <div className="font-medium">{new Date(trastero.contracts[0].startDate).toLocaleDateString()}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Precio Contrato:</span>
+                        <div className="font-medium">{trastero.contracts[0].currentPrice}€/mes</div>
+                      </div>
+                      {trastero.contracts[0].insuranceCoverage && (
+                        <div>
+                          <span className="text-gray-500">Seguro:</span>
+                          <div className="font-medium">{trastero.contracts[0].insuranceCoverage}€</div>
+                        </div>
+                      )}
+                      {trastero.contracts[0].content && (
+                        <div className="md:col-span-2">
+                          <span className="text-gray-500">Contenido:</span>
+                          <div className="font-medium">{trastero.contracts[0].content}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                     Precio (€/mes) *
