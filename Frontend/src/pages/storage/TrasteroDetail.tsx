@@ -98,7 +98,7 @@ const TrasteroDetail = () => {
                             <p><strong>Número:</strong> {trastero.number}</p>
                             <p><strong>Metros cuadrados:</strong> {trastero.m2}m²</p>
                             <p><strong>Metros cúbicos:</strong> {trastero.m3}m³</p>
-                            <p><strong>Precio:</strong> {trastero.price}€ / mes</p>
+                            <p><strong>Precio:</strong> {trastero.price}€ / mes (IVA Incluido)</p>
                             <p><strong>Estado:</strong> <span className={`status-badge ${getStatusClass(trastero.status)}`}>{trastero.status}</span></p>
                             {trastero.location && <p><strong>Ubicación:</strong> {trastero.location}</p>}
                             {trastero.observations && <p><strong>Observaciones:</strong> {trastero.observations}</p>}

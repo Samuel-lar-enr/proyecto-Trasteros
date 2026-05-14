@@ -15,6 +15,7 @@ const CreateTrastero = () => {
     typeId: '',
     newTypeName: '',
     price: '',
+    priceNoVat: '',
     m2: '',
     m3: '',
     location: '',
@@ -39,10 +40,21 @@ const CreateTrastero = () => {
       }
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === 'price') {
+        const price = parseFloat(value) || 0;
+        const priceNoVat = price / 1.21;
+        newData.priceNoVat = priceNoVat.toFixed(2);
+      } else if (name === 'priceNoVat') {
+        const priceNoVat = parseFloat(value) || 0;
+        const price = priceNoVat * 1.21;
+        newData.price = price.toFixed(2);
+      }
+
+      return newData;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,8 +178,24 @@ const CreateTrastero = () => {
                 </div>
 
                 <div>
+                  <label htmlFor="priceNoVat" className="block text-sm font-medium text-gray-700 mb-2">
+                    Precio sin IVA (€/mes)
+                  </label>
+                  <input
+                    type="number"
+                    id="priceNoVat"
+                    name="priceNoVat"
+                    value={formData.priceNoVat}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio (€/mes) *
+                    Precio (€/mes) IVA Incluido *
                   </label>
                   <input
                     type="number"

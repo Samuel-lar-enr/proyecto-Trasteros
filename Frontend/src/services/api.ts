@@ -22,7 +22,9 @@ import type {
   ApplyIpcRequest,
   UpdateStorageUnitRequest,
   AssignClientRequest,
-  CreateInvoiceRequest
+  CreateInvoiceRequest,
+  CounterInvoiceResponse,
+  User
 } from '../types/apiTypes';
 
 /**
@@ -216,12 +218,20 @@ export const invoiceService = {
     const res = await api.put(`/invoices/${id}/status`, { status });
     return res.data;
   },
-  delete: async (id: number): Promise<GenericResponse> => {
-    const res = await api.delete(`/invoices/${id}`);
+  delete: async (id: number): Promise<CounterInvoiceResponse> => {
+    const res = await api.delete<CounterInvoiceResponse>(`/invoices/${id}`);
     return res.data;
   },
   create: async (data: CreateInvoiceRequest): Promise<{ message: string, invoice: Invoice }> => {
     const res = await api.post('/invoices', data);
+    return res.data;
+  },
+  getSeries: async (): Promise<{ series: string[] }> => {
+    const res = await api.get('/invoices/series');
+    return res.data;
+  },
+  getNextNumber: async (series: string, year?: number): Promise<{ nextNumber: string }> => {
+    const res = await api.get('/invoices/next-number', { params: { series, year } });
     return res.data;
   }
 };

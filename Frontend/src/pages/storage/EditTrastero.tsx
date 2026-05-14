@@ -24,6 +24,7 @@ const EditTrastero: React.FC = () => {
     typeId: '',
     newTypeName: '',
     price: '',
+    priceNoVat: '',
     m2: '',
     m3: '',
     location: '',
@@ -59,10 +60,14 @@ const EditTrastero: React.FC = () => {
         setUsers(validUsers);
 
         // Populate form with existing data
+        const price = trasteroRes.storageUnit.price;
+        const priceNoVat = (parseFloat(price.toString()) / 1.21).toFixed(2);
+
         setFormData({
           typeId: trasteroRes.storageUnit.typeId.toString(),
           newTypeName: '',
-          price: trasteroRes.storageUnit.price.toString(),
+          price: price.toString(),
+          priceNoVat: priceNoVat,
           m2: trasteroRes.storageUnit.m2.toString(),
           m3: trasteroRes.storageUnit.m3.toString(),
           location: trasteroRes.storageUnit.location,
@@ -106,10 +111,21 @@ const EditTrastero: React.FC = () => {
       );
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === 'price') {
+        const price = parseFloat(value) || 0;
+        const priceNoVat = price / 1.21;
+        newData.priceNoVat = priceNoVat.toFixed(2);
+      } else if (name === 'priceNoVat') {
+        const priceNoVat = parseFloat(value) || 0;
+        const price = priceNoVat * 1.21;
+        newData.price = price.toFixed(2);
+      }
+
+      return newData;
+    });
   };
 
   const handleAssignChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -338,7 +354,7 @@ const EditTrastero: React.FC = () => {
                         <div className="font-medium">{new Date(trastero.contracts[0].startDate).toLocaleDateString()}</div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Precio Contrato:</span>
+                        <span className="text-gray-500">Precio Contrato (IVA Incl.):</span>
                         <div className="font-medium">{trastero.contracts[0].currentPrice}€/mes</div>
                       </div>
                       {trastero.contracts[0].insuranceCoverage && (
@@ -358,8 +374,24 @@ const EditTrastero: React.FC = () => {
                 )}
 
                 <div>
+                  <label htmlFor="priceNoVat" className="block text-sm font-medium text-gray-700 mb-2">
+                    Precio sin IVA (€/mes)
+                  </label>
+                  <input
+                    type="number"
+                    id="priceNoVat"
+                    name="priceNoVat"
+                    value={formData.priceNoVat}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio (€/mes) *
+                    Precio (€/mes) IVA Incluido *
                   </label>
                   <input
                     type="number"
