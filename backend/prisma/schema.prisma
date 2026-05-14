@@ -94,7 +94,7 @@ model Contract {
 model Invoice {
   id            Int           @id @default(autoincrement())
   date          DateTime      @default(now())
-  number        String        @unique
+  number        String
   series        String?
   userId        Int           @map("user_id")
   storageUnitId Int           @map("storage_unit_id")
@@ -109,6 +109,7 @@ model Invoice {
 
   @@index([storageUnitId], map: "invoices_storage_unit_id_fkey")
   @@index([userId], map: "invoices_user_id_fkey")
+  @@unique([number, series])
   @@map("invoices")
 }
 

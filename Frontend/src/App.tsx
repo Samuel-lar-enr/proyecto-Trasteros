@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/authContext';
 import { TrasterosProvider } from './contexts/TrasterosContext';
 import { InvoiceProvider } from './contexts/InvoiceContext';
+import { ContractProvider } from './contexts/ContractContext';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ActivationPage from './pages/auth/ActivationPage';
@@ -27,7 +28,8 @@ const App = () => {
     <AuthProvider>
       <TrasterosProvider>
         <InvoiceProvider>
-          <BrowserRouter>
+          <ContractProvider>
+            <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/activate/:token" element={<ActivationPage />} />
@@ -119,7 +121,8 @@ const App = () => {
             <Route path="/" element={<Navigate to="/trasteros" replace />} />
             <Route path="*" element={<Navigate to="/trasteros" replace />} />
           </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </ContractProvider>
         </InvoiceProvider>
       </TrasterosProvider>
     </AuthProvider>

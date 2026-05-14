@@ -13,6 +13,7 @@ export async function createInvoice(req: Request, res: Response, next: NextFunct
     const invoice = await prisma.invoice.create({
       data: {
         ...data,
+        series: data.series || null,
         taxBase: data.taxBase.toString(),
         vatAmount: data.vatAmount.toString(),
         total: data.total.toString(),
@@ -31,7 +32,8 @@ export async function createInvoice(req: Request, res: Response, next: NextFunct
  */
 export async function generateMonthlyInvoices(req: Request, res: Response, next: NextFunction) {
   try {
-    const { month, year, series = 'A' } = batchGenerateSchema.parse(req.body);
+    let { month, year, series } = batchGenerateSchema.parse(req.body);
+    series = series || null;
     const vatRate = 0.21; // Standard 21% VAT in Spain
 
     // 1. Get all active contracts
@@ -48,9 +50,10 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
     // 2. Find the last invoice number OF THE SPECIFIC YEAR to continue sequence or start at 0
     const lastInvoice = await prisma.invoice.findFirst({
       where: {
+        series: series,
         date: {
-          gte: new Date(year, 0, 1),
-          lt: new Date(year + 1, 0, 1)
+          gte: new Date(Date.UTC(year, 0, 1)),
+          lt: new Date(Date.UTC(year + 1, 0, 1))
         }
       },
       orderBy: { id: 'desc' },
@@ -69,12 +72,13 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
     for (const contract of activeContracts) {
       try {
         // --- PREVENTION: Check if an invoice for this unit/month already exists ---
-        const firstDayOfMonth = new Date(year, month - 1, 1);
-        const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59);
+        const firstDayOfMonth = new Date(Date.UTC(year, month - 1, 1));
+        const lastDayOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59));
 
         const alreadyInvoiced = await prisma.invoice.findFirst({
           where: {
             storageUnitId: contract.storageUnitId,
+            series: series,
             date: { gte: firstDayOfMonth, lte: lastDayOfMonth }
           }
         });
@@ -86,7 +90,6 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
 
         // --- CALCULATION AND NUMBERING ---
         currentSequence++;
-        // const invoiceNumber = `${series}-${year}-${String(currentSequence).padStart(4, '0')}`;
         const invoiceNumber = `${year}-${String(currentSequence).padStart(4, '0')}`;
 
         const price = Number(contract.currentPrice);
@@ -99,7 +102,7 @@ export async function generateMonthlyInvoices(req: Request, res: Response, next:
             series,
             userId: contract.userId,
             storageUnitId: contract.storageUnitId,
-            date: new Date(year, month - 1, 1),
+            date: new Date(Date.UTC(year, month - 1, 1)),
             taxBase: taxBase.toFixed(2),
             vatAmount: vatAmount.toFixed(2),
             total: price.toFixed(2),
@@ -194,21 +197,114 @@ export async function deleteInvoice(req: Request, res: Response, next: NextFunct
   try {
     const id = Number(req.params.id);
 
-    // Only allow deleting PENDING invoices? Business rule might vary
-    const invoice = await prisma.invoice.findUnique({ where: { id } });
-    if (!invoice) {
+    // 1. Obtener la factura original
+    const originalInvoice = await prisma.invoice.findUnique({ where: { id } });
+    if (!originalInvoice) {
       res.status(404).json({ error: "No encontrado", message: "Factura no encontrada" });
       return;
     }
 
-    if (invoice.status === 'PAID') {
-      res.status(400).json({ error: "Error", message: "No se puede eliminar una factura ya pagada" });
-      return;
+    // 2. Determinar el año para la numeración (usamos el año actual)
+    const now = new Date();
+    const year = now.getFullYear();
+
+    // 3. Buscar el último número de factura para la misma serie y año actual
+    const lastInvoice = await prisma.invoice.findFirst({
+      where: {
+        series: originalInvoice.series,
+        date: {
+          gte: new Date(Date.UTC(year, 0, 1)),
+          lt: new Date(Date.UTC(year + 1, 0, 1))
+        }
+      },
+      orderBy: { id: 'desc' },
+    });
+
+    let currentSequence = 0;
+    if (lastInvoice && lastInvoice.number.includes('-')) {
+      const parts = lastInvoice.number.split('-');
+      currentSequence = parseInt(parts[parts.length - 1]) || 0;
     }
 
-    await prisma.invoice.delete({ where: { id } });
+    const nextSequence = currentSequence + 1;
+    const nextNumber = `${year}-${String(nextSequence).padStart(4, '0')}`;
 
-    res.status(200).json({ message: "Factura eliminada correctamente" });
+    // 4. Crear la contrafactura con valores negativos
+    const counterInvoice = await prisma.invoice.create({
+      data: {
+        number: nextNumber,
+        series: originalInvoice.series,
+        userId: originalInvoice.userId,
+        storageUnitId: originalInvoice.storageUnitId,
+        date: now,
+        taxBase: (Number(originalInvoice.taxBase) * -1).toFixed(2),
+        vatAmount: (Number(originalInvoice.vatAmount) * -1).toFixed(2),
+        total: (Number(originalInvoice.total) * -1).toFixed(2),
+        status: 'RETURNED', // Las contrafacturas pueden marcarse como pagadas/efectivas para cuadrar caja
+      }
+    });
+
+    res.status(201).json({ 
+      message: "Contrafactura generada correctamente", 
+      invoice: counterInvoice 
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+export async function getSeries(req: Request, res: Response, next: NextFunction) {
+  try {
+    const invoices = await prisma.invoice.findMany({
+      select: { series: true },
+      distinct: ['series'],
+    });
+    
+    const seriesList = invoices
+      .map(inv => inv.series)
+      .filter((s): s is string => s !== null && s !== '');
+    
+    res.json({ series: seriesList });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getNextInvoiceNumber(req: Request, res: Response, next: NextFunction) {
+  try {
+    const series = req.query.series as string || '';
+    const year = parseInt(req.query.year as string) || new Date().getFullYear();
+
+    const where: any = {
+      date: {
+        gte: new Date(Date.UTC(year, 0, 1)),
+        lt: new Date(Date.UTC(year + 1, 0, 1))
+      }
+    };
+
+    if (!series || series === '') {
+      where.OR = [
+        { series: null },
+        { series: '' }
+      ];
+    } else {
+      where.series = series;
+    }
+
+    const lastInvoice = await prisma.invoice.findFirst({
+      where,
+      orderBy: { id: 'desc' },
+    });
+
+    let currentSequence = 0;
+    if (lastInvoice && lastInvoice.number.includes('-')) {
+      const parts = lastInvoice.number.split('-');
+      currentSequence = parseInt(parts[parts.length - 1]) || 0;
+    }
+
+    const nextSequence = currentSequence + 1;
+    const nextNumber = `${year}-${String(nextSequence).padStart(4, '0')}`;
+
+    res.json({ nextNumber });
   } catch (error) {
     next(error);
   }

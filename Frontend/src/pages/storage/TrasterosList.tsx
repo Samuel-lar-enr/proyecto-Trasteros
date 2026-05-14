@@ -22,7 +22,7 @@ const TrasterosList = () => {
   const availableFilters = [
     { key: 'number', label: 'Número' },
     { key: 'location', label: 'Ubicación' },
-    { key: 'price', label: 'Precio' },
+    { key: 'price', label: 'Precio (IVA Incl.)' },
     { key: 'm2', label: 'M2' },
     { key: 'm3', label: 'M3' }
   ];
@@ -77,11 +77,20 @@ const TrasterosList = () => {
     }
 
     filtered.sort((a, b) => {
-      const aVal = a[sortColumn];
-      const bVal = b[sortColumn];
+      let aVal: any = a[sortColumn];
+      let bVal: any = b[sortColumn];
+
+      // Handle nulls
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return sortDirection === 'asc' ? -1 : 1;
       if (bVal == null) return sortDirection === 'asc' ? 1 : -1;
+
+      // Special handling for numeric fields
+      if (['price', 'm2', 'm3'].includes(sortColumn as string)) {
+        aVal = parseFloat(aVal.toString());
+        bVal = parseFloat(bVal.toString());
+      }
+
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -216,7 +225,7 @@ const TrasterosList = () => {
                     <th onClick={() => handleSort('m2')}>M2 {sortColumn === 'm2' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th onClick={() => handleSort('m3')}>M3 {sortColumn === 'm3' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th onClick={() => handleSort('location')}>Ubicación {sortColumn === 'location' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
-                    <th onClick={() => handleSort('price')}>Precio {sortColumn === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                    <th onClick={() => handleSort('price')}>Precio (IVA Incl.) {sortColumn === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th onClick={() => handleSort('status')}>Estado {sortColumn === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     {user?.role === 'ADMIN' && <th>Acciones</th>}
                   </tr>

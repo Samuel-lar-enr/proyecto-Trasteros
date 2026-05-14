@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from '../../contexts/InvoiceContext';
-import { contractService } from '../../services/api';
+import { useContracts } from '../../contexts/ContractContext';
 import NavBar from '../../components/NavBar';
 import type { User, StorageUnit, CreateInvoiceRequest, Contract } from '../../types/apiTypes';
 
 const InvoiceForm = () => {
   const navigate = useNavigate();
-  const { createInvoice, loading: invoiceLoading } = useInvoices();
+  const { createInvoice, seriesList, getNextNumber, loading: invoiceLoading } = useInvoices();
+  const { contracts: activeContracts, loading: contractsLoading } = useContracts();
   
-  const [activeContracts, setActiveContracts] = useState<Contract[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const [isFetchingNumber, setIsFetchingNumber] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Partial<CreateInvoiceRequest>>({
     number: '',
-    series: 'A',
+    series: '',
     userId: 0,
     storageUnitId: 0,
     taxBase: 0,
@@ -25,25 +25,11 @@ const InvoiceForm = () => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        const response = await contractService.getAll({ isActive: true });
-        setActiveContracts(response.contracts);
-      } catch (err) {
-        console.error('Error fetching active contracts:', err);
-        setError('No se pudieron cargar los contratos activos.');
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    fetchContracts();
-  }, []);
-
-  // Get unique clients from active contracts
+  // Get unique clients from active contracts (already filtered by isActive: true in ContractContext usually, but we filter here too if needed)
   const clients = useMemo(() => {
+    const active = activeContracts.filter(c => c.isActive);
     const uniqueUsersMap = new Map<number, User>();
-    activeContracts.forEach(c => {
+    active.forEach(c => {
       if (c.user && !uniqueUsersMap.has(c.userId)) {
         uniqueUsersMap.set(c.userId, c.user);
       }
@@ -55,10 +41,29 @@ const InvoiceForm = () => {
   const clientTrasteros = useMemo(() => {
     if (!formData.userId) return [];
     return activeContracts
-      .filter(c => c.userId === formData.userId)
+      .filter(c => c.isActive && c.userId === formData.userId)
       .map(c => c.storageUnit)
       .filter((u): u is StorageUnit => !!u);
   }, [formData.userId, activeContracts]);
+
+  // Fetch next number when series or date changes
+  useEffect(() => {
+    const fetchNextNumber = async () => {
+      setIsFetchingNumber(true);
+      try {
+        const year = formData.date ? new Date(formData.date).getFullYear() : new Date().getFullYear();
+        const nextNum = await getNextNumber(formData.series || '', year);
+        setFormData(prev => ({ ...prev, number: nextNum }));
+      } catch (err) {
+        console.error('Error fetching next number:', err);
+      } finally {
+        setIsFetchingNumber(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchNextNumber, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [formData.series, formData.date, getNextNumber]);
 
   const updatePrices = (data: any, priceValue: string | number) => {
     const price = typeof priceValue === 'string' ? parseFloat(priceValue) : priceValue;
@@ -142,12 +147,13 @@ const InvoiceForm = () => {
     }
   };
 
-  if (loadingData) {
+  if (contractsLoading) {
     return (
       <div>
         <NavBar />
         <div className="container">
-          <p>Cargando datos...</p>
+          <div className="spinner"></div>
+          <p style={{ textAlign: 'center', marginTop: '1rem' }}>Cargando datos...</p>
         </div>
       </div>
     );
@@ -213,15 +219,23 @@ const InvoiceForm = () => {
                 type="text"
                 id="series"
                 name="series"
+                list="series-list"
                 value={formData.series}
                 onChange={handleChange}
                 placeholder="A"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
               />
+              <datalist id="series-list">
+                {seriesList.map(s => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
             </div>
 
             <div>
-              <label htmlFor="number" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Número *</label>
+              <label htmlFor="number" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Número * {isFetchingNumber && <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 'normal' }}>(calculando...)</span>}
+              </label>
               <input
                 type="text"
                 id="number"
@@ -230,7 +244,7 @@ const InvoiceForm = () => {
                 onChange={handleChange}
                 required
                 placeholder="2024-0001"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: isFetchingNumber ? '#f9fafb' : 'white' }}
               />
             </div>
 

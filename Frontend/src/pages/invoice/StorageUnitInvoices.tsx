@@ -31,10 +31,10 @@ const StorageUnitInvoices = () => {
     return [0, ...uniqueYears.sort((a, b) => b - a)]; // 0 for All, then descending
   }, [invoices]);
 
-  const handleDelete = (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta factura?')) {
+  const handleCounterInvoice = (id: number) => {
+    if (confirm('¿Estás seguro de que quieres generar una contrafactura para anular esta factura? Se creará una nueva factura con importes negativos.')) {
       deleteInvoice(id);
-      refreshInvoices({});
+      refreshInvoices({ storageUnitId: trasteroId });
     }
   };
 
@@ -172,11 +172,11 @@ const StorageUnitInvoices = () => {
                         <div className="total"><span>Total:</span> {Number(invoice.total).toFixed(2)}€</div>
                       </div>
                     </div>
-                    {invoice.status === 'PENDING' && (
-                      <div className="invoice-card-actions" onClick={(e) => e.stopPropagation()}>
-                        <button className="delete-btn" onClick={() => handleDelete(invoice.id)}>Borrar</button>
-                      </div>
-                    )}
+                    <div className="invoice-card-actions" onClick={(e) => e.stopPropagation()}>
+                      <button className="counter-invoice-btn" onClick={() => handleCounterInvoice(invoice.id)}>
+                        Anular (Contrafactura)
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

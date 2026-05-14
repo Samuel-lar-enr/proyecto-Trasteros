@@ -144,6 +144,10 @@ export interface GenericResponse {
   message: string;
 }
 
+export interface CounterInvoiceResponse extends GenericResponse {
+  invoice: Invoice;
+}
+
 export interface ErrorResponse {
   error: string;
   message: string;

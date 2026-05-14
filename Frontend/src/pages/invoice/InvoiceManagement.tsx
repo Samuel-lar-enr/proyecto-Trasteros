@@ -19,8 +19,8 @@ const InvoiceManagement = () => {
     refreshInvoices({});
   }, []);
 
-  const handleDelete = (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta factura?')) {
+  const handleCounterInvoice = (id: number) => {
+    if (confirm('¿Estás seguro de que quieres generar una contrafactura para anular esta factura? Se creará una nueva factura con importes negativos.')) {
       deleteInvoice(id);
       refreshInvoices({});
     }
@@ -53,8 +53,8 @@ const InvoiceManagement = () => {
 
       switch (sortColumn) {
         case 'number':
-          aVal = `${a.series}${a.number}`;
-          bVal = `${b.series}${b.number}`;
+          aVal = `${a.series || ''}${a.number}`;
+          bVal = `${b.series || ''}${b.number}`;
           break;
         case 'date':
           aVal = new Date(a.date).getTime();
@@ -259,16 +259,14 @@ const InvoiceManagement = () => {
                             >
                               👁️
                             </button>
-                            {invoice.status === 'PENDING' && (
-                              <button 
-                                className="delete-btn" 
-                                onClick={() => handleDelete(invoice.id)}
-                                title="Eliminar factura"
-                                style={{ padding: '4px 8px', fontSize: '0.9rem' }}
-                              >
-                                🗑️
-                              </button>
-                            )}
+                            <button 
+                              className="counter-invoice-btn-icon" 
+                              onClick={() => handleCounterInvoice(invoice.id)}
+                              title="Anular con contrafactura"
+                              style={{ padding: '4px 8px', fontSize: '0.9rem', backgroundColor: '#fee2e2', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              🔄
+                            </button>
                           </div>
                         </td>
                       </tr>

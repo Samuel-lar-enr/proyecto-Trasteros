@@ -12,6 +12,9 @@ interface InvoiceContextType {
   updateStatus: (id: number, status: string) => Promise<void>;
   deleteInvoice: (id: number) => Promise<void>;
   createInvoice: (data: any) => Promise<void>;
+  seriesList: string[];
+  fetchSeries: () => Promise<void>;
+  getNextNumber: (series: string, year?: number) => Promise<string>;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -20,6 +23,7 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [seriesList, setSeriesList] = useState<string[]>([]);
 
   const fetchInvoices = async (filters?: any) => {
     setLoading(true);
@@ -37,12 +41,23 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const fetchSeries = async () => {
+    try {
+      const response = await invoiceService.getSeries();
+      setSeriesList(response.series);
+    } catch (err) {
+      console.error('Error fetching series:', err);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
+    fetchSeries();
   }, []);
 
   const refreshInvoices = async (filters?: any) => {
     await fetchInvoices(filters);
+    await fetchSeries();
   };
 
   const batchGenerate = async (data: BatchGenerateInvoicesRequest) => {
@@ -50,6 +65,7 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const response = await invoiceService.batchGenerate(data);
       await fetchInvoices(); // Refresh after generation
+      await fetchSeries();   // New series might have been used
       return response;
     } catch (err: any) {
       const message = err.response?.data?.message || 'Error al generar facturas en lote';
@@ -74,10 +90,13 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const deleteInvoice = async (id: number) => {
     try {
-      await invoiceService.delete(id);
-      setInvoices(prev => prev.filter(inv => inv.id !== id));
+      const response = await invoiceService.delete(id);
+      if (response && response.invoice) {
+        setInvoices(prev => [response.invoice, ...prev]);
+        await fetchSeries(); // The counter-invoice might have a different series
+      }
     } catch (err) {
-      console.error('Error deleting invoice:', err);
+      console.error('Error in counter-invoice generation:', err);
       throw err;
     }
   };
@@ -87,11 +106,22 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       await invoiceService.create(data);
       await fetchInvoices();
+      await fetchSeries();
     } catch (err) {
       console.error('Error creating invoice:', err);
       throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getNextNumber = async (series: string, year?: number) => {
+    try {
+      const response = await invoiceService.getNextNumber(series, year);
+      return response.nextNumber;
+    } catch (err) {
+      console.error('Error getting next number:', err);
+      throw err;
     }
   };
 
@@ -104,7 +134,10 @@ export const InvoiceProvider: React.FC<{ children: ReactNode }> = ({ children })
       batchGenerate,
       updateStatus,
       deleteInvoice,
-      createInvoice
+      createInvoice,
+      seriesList,
+      fetchSeries,
+      getNextNumber
     }}>
       {children}
     </InvoiceContext.Provider>

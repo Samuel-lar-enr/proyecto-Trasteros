@@ -5,7 +5,9 @@ import {
   listInvoices, 
   getInvoice, 
   updateInvoiceStatus, 
-  deleteInvoice 
+  deleteInvoice,
+  getSeries,
+  getNextInvoiceNumber
 } from "../controllers/invoice.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 
@@ -20,6 +22,8 @@ const router = Router();
 router.get("/", requireAdmin, listInvoices);
 router.post("/", requireAdmin, createInvoice);
 router.post("/batch-generate", requireAdmin, generateMonthlyInvoices);
+router.get("/series", requireAdmin, getSeries);
+router.get("/next-number", requireAdmin, getNextInvoiceNumber);
 router.get("/:id", requireAuth, getInvoice);
 router.patch("/:id/status", requireAdmin, updateInvoiceStatus);
 router.delete("/:id", requireAdmin, deleteInvoice);

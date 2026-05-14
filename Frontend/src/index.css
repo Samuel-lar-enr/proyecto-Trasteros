@@ -733,3 +733,38 @@ input:focus {
   border-color: #059669;
   box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
 }
+/* Counter-invoice buttons */
+.counter-invoice-btn {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #ef4444;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.counter-invoice-btn:hover {
+  background-color: #fecaca;
+  transform: translateY(-1px);
+}
+
+.counter-invoice-btn-icon {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #ef4444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counter-invoice-btn-icon:hover {
+  background-color: #fecaca;
+  transform: scale(1.05);
+}
